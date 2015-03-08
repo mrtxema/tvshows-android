@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_settings">Settings</string>
+    <string name="add">+</string>
+    <string name="app_name">TV shows</string>
+    <string name="goup">Subir</string>
+    <string name="markViewed">Visto</string>
+    <string name="noresults">No se ha encontrado ninguna serie</string>
+    <string name="search">Buscar</string>
+    <string name="show">Serie</string>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="episodeLoadingPanel" type="id" />
+    <item name="btnUp" type="id" />
+    <item name="btnMarkViewed" type="id" />
+    <item name="subtitle" type="id" />
+    <item name="txtMessages" type="id" />
+    <item name="lstLinks" type="id" />
+    <item name="mainLoadingPanel" type="id" />
+    <item name="linearLayout3" type="id" />
+    <item name="textView3" type="id" />
+    <item name="txtShow" type="id" />
+    <item name="btnSearchShow" type="id" />
+    <item name="lstShows" type="id" />
+    <item name="searchLoadingPanel" type="id" />
+    <item name="seasonLoadingPanel" type="id" />
+    <item name="lstEpisodes" type="id" />
+    <item name="showLoadingPanel" type="id" />
+    <item name="btnAddShow" type="id" />
+    <item name="lstSeasons" type="id" />
+    <item name="text" type="id" />
+    <item name="action_settings" type="id" />
+</resources>
