@@ -3,22 +3,25 @@ package com.acme.tvshows.android.store;
 import android.os.Parcelable;
 import android.os.Parcel;
 
+import java.util.Date;
+
 public class FavoriteShow implements Parcelable {
     private Integer id;
     private Integer nextEpisodeNumber;
     private Integer nextEpisodeSeason;
     private String nextEpisodeTitle;
+    private Date lastUpdate;
     private final String showId;
     private final String showName;
     private final String store;
-    
+
     public FavoriteShow(String store, String showId, String showName) {
         this.store = store;
         this.showId = showId;
         this.showName = showName;
     }
     
-    public FavoriteShow(int id, String store, String showId, String showName, Integer nextEpisodeSeason, Integer nextEpisodeNumber, String nextEpisodeTitle) {
+    public FavoriteShow(int id, String store, String showId, String showName, Integer nextEpisodeSeason, Integer nextEpisodeNumber, String nextEpisodeTitle, Date lastUpdate) {
         this.id = id;
         this.store = store;
         this.showId = showId;
@@ -26,6 +29,7 @@ public class FavoriteShow implements Parcelable {
         this.nextEpisodeSeason = nextEpisodeSeason;
         this.nextEpisodeNumber = nextEpisodeNumber;
         this.nextEpisodeTitle = nextEpisodeTitle;
+        this.lastUpdate = lastUpdate;
     }
     
     public Integer getId() {
@@ -63,6 +67,10 @@ public class FavoriteShow implements Parcelable {
     public String getNextEpisodeTitle() {
         return nextEpisodeTitle;
     }
+
+    public Date getLastUpdate() {
+        return lastUpdate;
+    }
     
     public boolean isEpisodeSeen(int season, int episodeNumber) {
         if ((nextEpisodeSeason != null) && (nextEpisodeNumber != null)) {
@@ -88,6 +96,7 @@ public class FavoriteShow implements Parcelable {
         nextEpisodeSeason = seasonNumber;
         nextEpisodeNumber = episodeNumber;
         nextEpisodeTitle = episodeTitle;
+        lastUpdate = new Date();
     }
     
     public String toString() {
@@ -106,6 +115,7 @@ public class FavoriteShow implements Parcelable {
         writeOptionalInteger(out, nextEpisodeSeason);
         writeOptionalInteger(out, nextEpisodeNumber);
         out.writeString(nextEpisodeTitle);
+        writeOptionalDate(out, lastUpdate);
     }
     
     private void writeOptionalInteger(Parcel out, Integer i) {
@@ -116,7 +126,16 @@ public class FavoriteShow implements Parcelable {
         int result = in.readInt();
         return (result != -1) ? result : null;
     }
-    
+
+    private void writeOptionalDate(Parcel out, Date d) {
+        out.writeLong((d != null) ? d.getTime() : -1);
+    }
+
+    private Date readOptionalDate(Parcel in) {
+        long result = in.readLong();
+        return (result != -1) ? new Date(result) : null;
+    }
+
     private FavoriteShow(Parcel in) {
         id = readOptionalInteger(in);
         store = in.readString();
@@ -125,6 +144,7 @@ public class FavoriteShow implements Parcelable {
         nextEpisodeSeason = readOptionalInteger(in);
         nextEpisodeNumber = readOptionalInteger(in);
         nextEpisodeTitle = in.readString();
+        lastUpdate = readOptionalDate(in);
     }
 
     public static final Parcelable.Creator<FavoriteShow> CREATOR = new Parcelable.Creator<FavoriteShow>() {

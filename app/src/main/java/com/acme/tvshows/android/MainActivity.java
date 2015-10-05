@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import java.util.List;
 
+import com.acme.tvshows.android.adapter.ShowViewAdapter;
 import com.acme.tvshows.android.store.FavoriteShow;
 import com.acme.tvshows.android.store.DatabaseManager;
 import android.widget.ListView;
@@ -82,7 +83,7 @@ public class MainActivity extends Activity {
         
         protected void onPostExecute(Boolean result) {
             if(result) {
-                lstShows.setAdapter(new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, shows));
+                lstShows.setAdapter(new ShowViewAdapter(MainActivity.this, shows));
             }
             findViewById(R.id.mainLoadingPanel).setVisibility(View.GONE);
         }

@@ -6,12 +6,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
+
+import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 
 public class FavoriteShowStore extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "tvshows";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_SHOWS = "shows";
     private static final String KEY_ID = "id";
@@ -21,6 +23,7 @@ public class FavoriteShowStore extends SQLiteOpenHelper {
     private static final String KEY_SHOW_ID = "show_id";
     private static final String KEY_SHOW_NAME = "show_name";
     private static final String KEY_STORE = "store";
+    private static final String KEY_LAST_UPDATE = "last_update";
 
     public FavoriteShowStore(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -34,13 +37,18 @@ public class FavoriteShowStore extends SQLiteOpenHelper {
                 KEY_SHOW_NAME + " TEXT, " +
                 KEY_NEXT_EPISODE_SEASON + " INTEGER, " +
                 KEY_NEXT_EPISODE_NUMBER + " INTEGER, " +
-                KEY_NEXT_EPISODE_TITLE + " TEXT)";
+                KEY_NEXT_EPISODE_TITLE + " TEXT, " +
+                KEY_LAST_UPDATE + " INTEGER)";
         db.execSQL(CREATE_SHOWS_TABLE);
     }
     
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_SHOWS);
-        onCreate(db);
+        if (newVersion == DATABASE_VERSION && oldVersion == 1) {
+            db.execSQL("ALTER TABLE " + TABLE_SHOWS + " ADD COLUMN " + KEY_LAST_UPDATE + " INTEGER");
+        } else {
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_SHOWS);
+            onCreate(db);
+        }
     }
     
     private ContentValues buildContentValues(FavoriteShow show) {
@@ -51,6 +59,7 @@ public class FavoriteShowStore extends SQLiteOpenHelper {
         values.put(KEY_NEXT_EPISODE_SEASON, show.getNextEpisodeSeason());
         values.put(KEY_NEXT_EPISODE_NUMBER, show.getNextEpisodeNumber());
         values.put(KEY_NEXT_EPISODE_TITLE, show.getNextEpisodeTitle());
+        values.put(KEY_LAST_UPDATE, show.getLastUpdate() == null ? null : show.getLastUpdate().getTime());
         return values;
     }
     
@@ -62,7 +71,12 @@ public class FavoriteShowStore extends SQLiteOpenHelper {
         final int columnIndex = cursor.getColumnIndex(field);
         return cursor.isNull(columnIndex) ? null : cursor.getInt(columnIndex);
     }
-    
+
+    private Date getCursorDate(Cursor cursor, String field) {
+        final int columnIndex = cursor.getColumnIndex(field);
+        return cursor.isNull(columnIndex) ? null : new Date(cursor.getLong(columnIndex));
+    }
+
     public void addShow(FavoriteShow show) throws StoreException {
         final SQLiteDatabase db = getWritableDatabase();
         try {
@@ -84,10 +98,11 @@ public class FavoriteShowStore extends SQLiteOpenHelper {
                     TABLE_SHOWS,
                     new String[] {
                             KEY_ID, KEY_STORE, KEY_SHOW_ID, KEY_SHOW_NAME,
-                            KEY_NEXT_EPISODE_SEASON, KEY_NEXT_EPISODE_NUMBER, KEY_NEXT_EPISODE_TITLE
+                            KEY_NEXT_EPISODE_SEASON, KEY_NEXT_EPISODE_NUMBER, KEY_NEXT_EPISODE_TITLE,
+                            KEY_LAST_UPDATE
                     },
                     null, null, null, null,
-                    KEY_SHOW_NAME);
+                    KEY_LAST_UPDATE + " DESC, " + KEY_SHOW_NAME);
             if(cursor.moveToFirst()) {
                 do {
                     FavoriteShow show = new FavoriteShow(
@@ -97,7 +112,8 @@ public class FavoriteShowStore extends SQLiteOpenHelper {
                             cursor.getString(cursor.getColumnIndex(KEY_SHOW_NAME)),
                             getCursorInteger(cursor, KEY_NEXT_EPISODE_SEASON),
                             getCursorInteger(cursor, KEY_NEXT_EPISODE_NUMBER),
-                            cursor.getString(cursor.getColumnIndex(KEY_NEXT_EPISODE_TITLE))
+                            cursor.getString(cursor.getColumnIndex(KEY_NEXT_EPISODE_TITLE)),
+                            getCursorDate(cursor, KEY_LAST_UPDATE)
                     );
                     showList.add(show);
                 } while (cursor.moveToNext());

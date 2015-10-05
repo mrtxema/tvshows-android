@@ -123,9 +123,12 @@ public class EpisodeActivity extends Activity {
         }
         
         private void openWebPage(String url) {
-            Uri webpage = Uri.parse(url);
-            Intent intent = new Intent("android.intent.action.VIEW", webpage);
-            startActivity(intent);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(Uri.parse(url), "video/mkv");
+            Intent chooserIntent = Intent.createChooser(intent, getResources().getText(R.string.chooser_title));
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(chooserIntent);
+            }
         }
         
         protected void onPostExecute(Boolean result) {
