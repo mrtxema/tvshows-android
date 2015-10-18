@@ -18,6 +18,7 @@ import java.util.HashSet;
 
 public class TvShowClient {
     private static final String SERVER = "http://tvshowsapi.herokuapp.com";
+    private static final String BASE_PATH = "/tvshows/v1";
     private final HttpClient httpClient;
     
     public TvShowClient() {
@@ -26,7 +27,7 @@ public class TvShowClient {
     
     private String callUrl(String url) throws ShowServiceException {
         try {
-            final HttpGet httpGet = new HttpGet(SERVER + url);
+            final HttpGet httpGet = new HttpGet(SERVER + BASE_PATH + url);
             httpGet.setHeader("content-type", "application/json");
             final HttpResponse resp = httpClient.execute(httpGet);
             return EntityUtils.toString(resp.getEntity());
@@ -47,7 +48,7 @@ public class TvShowClient {
     }
     
     public Set getAllStores() throws ShowServiceException {
-        final String url = "/tvshows";
+        final String url = "";
         final Set<String> result = new HashSet<>();
         try {
             JSONArray response = callUrlAsJson(url);
@@ -64,7 +65,7 @@ public class TvShowClient {
         String url = null;
         final List<Show> result = new ArrayList<>();
         try {
-            url = String.format("/tvshows/%s?q=%s", store, URLEncoder.encode(searchString, "utf-8"));
+            url = String.format("/%s?q=%s", store, URLEncoder.encode(searchString, "utf-8"));
             JSONArray response = callUrlAsJson(url);
             for (int i = 0; i < response.length(); i++) {
                 JSONObject obj = response.getJSONObject(i);
@@ -79,7 +80,7 @@ public class TvShowClient {
     }
     
     public List<Season> getShowSeasons(String store, String show) throws ShowServiceException {
-        final String url = String.format("/tvshows/%s/%s", store, show);
+        final String url = String.format("/%s/%s", store, show);
         final List<Season> result = new ArrayList<>();
         try {
             JSONArray response = callUrlAsJson(url);
@@ -93,7 +94,7 @@ public class TvShowClient {
     }
     
     public List<Episode> getSeasonEpisodes(String store, String show, int season) throws ShowServiceException {
-        final String url = String.format("/tvshows/%s/%s/%d", store, show, season);
+        final String url = String.format("/%s/%s/%d", store, show, season);
         final List<Episode> result = new ArrayList<>();
         try {
             JSONArray response = callUrlAsJson(url);
@@ -108,7 +109,7 @@ public class TvShowClient {
     }
     
     public List<Link> getEpisodeLinks(String store, String show, int season, int episode) throws ShowServiceException {
-        final String url = String.format("/tvshows/%s/%s/%d/%d", store, show, season, episode);
+        final String url = String.format("/%s/%s/%d/%d", store, show, season, episode);
         final List<Link> result = new ArrayList<>();
         try {
             JSONArray response = callUrlAsJson(url);
@@ -125,7 +126,7 @@ public class TvShowClient {
     }
     
     public String getLinkUrl(String store, String show, int season, int episode, String link) throws ShowServiceException {
-        final String url = String.format("/tvshows/%s/%s/%d/%d/%s", store, show, season, episode, link);
+        final String url = String.format("/%s/%s/%d/%d/%s", store, show, season, episode, link);
         try {
             return callUrlAsJson(url).getString(0);
         } catch(JSONException e) {
