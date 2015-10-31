@@ -38,7 +38,7 @@ public class ShowActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show);
-        client = new TvShowClient();
+        client = TvShowClient.getInstance();
         show = getIntent().getExtras().getParcelable("show");
         TextView title = (TextView) findViewById(R.id.title);
         title.setText(show.getShowName());

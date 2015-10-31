@@ -35,7 +35,7 @@ public class EpisodeActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_episode);
-        client = new TvShowClient();
+        client = TvShowClient.getInstance();
         show = getIntent().getExtras().getParcelable("show");
         season = getIntent().getExtras().getInt("season");
         episodeNumber = getIntent().getExtras().getInt("episodeNumber");

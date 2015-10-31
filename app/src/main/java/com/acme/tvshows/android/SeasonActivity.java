@@ -35,7 +35,7 @@ public class SeasonActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_season);
-        client = new TvShowClient();
+        client = TvShowClient.getInstance();
         show = getIntent().getExtras().getParcelable("show");
         season = getIntent().getExtras().getInt("season");
         TextView title = (TextView) findViewById(R.id.title);

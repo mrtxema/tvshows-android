@@ -31,7 +31,7 @@ public class SearchActivity extends Activity {
         txtShow = (EditText) findViewById(R.id.txtShow);
         txtMessages = (TextView) findViewById(R.id.txtMessages);
         lstShows = (ListView) findViewById(R.id.lstShows);
-        client = new TvShowClient();
+        client = TvShowClient.getInstance();
         txtShow.setText(getIntent().getExtras().getString("searchString"));
         txtShow.setSelection(txtShow.getText().length());
         ImageButton btnSearchShow = (ImageButton) findViewById(R.id.btnSearchShow);
