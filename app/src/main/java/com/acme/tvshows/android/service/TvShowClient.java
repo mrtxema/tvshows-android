@@ -71,6 +71,7 @@ public class TvShowClient {
         String token = tokens.get(store);
         if (token == null) {
             token = login(store, getLoginCredentials(store));
+            tokens.put(store, token);
         }
         return token;
     }
