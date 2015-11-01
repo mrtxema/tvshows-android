@@ -130,7 +130,7 @@ public class TvShowClient {
     }
     
     public List<Episode> getSeasonEpisodes(String store, String show, int season) throws ShowServiceException {
-        final String url = String.format("/%s/show/%s/%d?token=%s", store, show, season, getToken(store) + "kk");
+        final String url = String.format("/%s/show/%s/%d?token=%s", store, show, season, getToken(store));
         final List<Episode> result = new ArrayList<>();
         try {
             JSONArray response = callApiUrl(store, url);
