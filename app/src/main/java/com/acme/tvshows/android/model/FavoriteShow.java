@@ -1,4 +1,4 @@
-package com.acme.tvshows.android.store;
+package com.acme.tvshows.android.model;
 
 import android.os.Parcelable;
 import android.os.Parcel;

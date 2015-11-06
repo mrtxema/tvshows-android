@@ -5,7 +5,7 @@ import java.util.List;
 import com.acme.tvshows.android.service.Season;
 import com.acme.tvshows.android.service.ShowServiceException;
 import com.acme.tvshows.android.service.TvShowClient;
-import com.acme.tvshows.android.store.FavoriteShow;
+import com.acme.tvshows.android.model.FavoriteShow;
 import android.util.Log;
 import com.acme.tvshows.android.adapter.ItemViewAdapter;
 import com.acme.tvshows.android.adapter.ItemViewCustomizer;
@@ -92,7 +92,7 @@ public class ShowActivity extends Activity {
         
         protected Boolean doInBackground(String[] params) {
             try {
-                seasons = client.getShowSeasons(show.getStore(), show.getShowId());
+                seasons = client.getShowSeasons(ShowActivity.this, show.getStore(), show.getShowId());
                 return true;
             } catch(ShowServiceException e) {
                 Log.e("TvShowClient", e.getMessage(), e);

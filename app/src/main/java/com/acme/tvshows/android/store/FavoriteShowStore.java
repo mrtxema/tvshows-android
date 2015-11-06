@@ -1,72 +1,78 @@
 package com.acme.tvshows.android.store;
 
-import android.database.sqlite.SQLiteOpenHelper;
-import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.SQLException;
+
+import com.acme.tvshows.android.model.FavoriteShow;
 
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 
-public class FavoriteShowStore extends SQLiteOpenHelper {
-    private static final String DATABASE_NAME = "tvshows";
-    private static final int DATABASE_VERSION = 2;
+public class FavoriteShowStore implements DatabaseStore<FavoriteShow> {
+    private static final String TABLE_NAME = "shows";
+    private static final String FIELD_ID = "id";
+    private static final String FIELD_NEXT_EPISODE_NUMBER = "next_episode_number";
+    private static final String FIELD_NEXT_EPISODE_SEASON = "next_episode_season";
+    private static final String FIELD_NEXT_EPISODE_TITLE = "next_episode_title";
+    private static final String FIELD_SHOW_ID = "show_id";
+    private static final String FIELD_SHOW_NAME = "show_name";
+    private static final String FIELD_STORE = "store";
+    private static final String FIELD_LAST_UPDATE = "last_update";
 
-    private static final String TABLE_SHOWS = "shows";
-    private static final String KEY_ID = "id";
-    private static final String KEY_NEXT_EPISODE_NUMBER = "next_episode_number";
-    private static final String KEY_NEXT_EPISODE_SEASON = "next_episode_season";
-    private static final String KEY_NEXT_EPISODE_TITLE = "next_episode_title";
-    private static final String KEY_SHOW_ID = "show_id";
-    private static final String KEY_SHOW_NAME = "show_name";
-    private static final String KEY_STORE = "store";
-    private static final String KEY_LAST_UPDATE = "last_update";
-
-    public FavoriteShowStore(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
-    }
-    
+    @Override
     public void onCreate(SQLiteDatabase db) {
-        final String CREATE_SHOWS_TABLE = "CREATE TABLE " + TABLE_SHOWS + " (" +
-                KEY_ID + " INTEGER PRIMARY KEY, " +
-                KEY_STORE + " TEXT, " +
-                KEY_SHOW_ID + " TEXT, " +
-                KEY_SHOW_NAME + " TEXT, " +
-                KEY_NEXT_EPISODE_SEASON + " INTEGER, " +
-                KEY_NEXT_EPISODE_NUMBER + " INTEGER, " +
-                KEY_NEXT_EPISODE_TITLE + " TEXT, " +
-                KEY_LAST_UPDATE + " INTEGER)";
+        final String CREATE_SHOWS_TABLE = "CREATE TABLE " + TABLE_NAME + " (" +
+                FIELD_ID + " INTEGER PRIMARY KEY, " +
+                FIELD_STORE + " TEXT, " +
+                FIELD_SHOW_ID + " TEXT, " +
+                FIELD_SHOW_NAME + " TEXT, " +
+                FIELD_NEXT_EPISODE_SEASON + " INTEGER, " +
+                FIELD_NEXT_EPISODE_NUMBER + " INTEGER, " +
+                FIELD_NEXT_EPISODE_TITLE + " TEXT, " +
+                FIELD_LAST_UPDATE + " INTEGER)";
         db.execSQL(CREATE_SHOWS_TABLE);
     }
-    
+
+    @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (newVersion == DATABASE_VERSION && oldVersion == 1) {
-            db.execSQL("ALTER TABLE " + TABLE_SHOWS + " ADD COLUMN " + KEY_LAST_UPDATE + " INTEGER");
-        } else {
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_SHOWS);
-            onCreate(db);
+        switch (oldVersion) {
+            case 1:
+                db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + FIELD_LAST_UPDATE + " INTEGER");
+                break;
+            case 2:
+                break;
+            default:
+                db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+                onCreate(db);
         }
     }
     
     private ContentValues buildContentValues(FavoriteShow show) {
         ContentValues values = new ContentValues();
-        values.put(KEY_STORE, show.getStore());
-        values.put(KEY_SHOW_ID, show.getShowId());
-        values.put(KEY_SHOW_NAME, show.getShowName());
-        values.put(KEY_NEXT_EPISODE_SEASON, show.getNextEpisodeSeason());
-        values.put(KEY_NEXT_EPISODE_NUMBER, show.getNextEpisodeNumber());
-        values.put(KEY_NEXT_EPISODE_TITLE, show.getNextEpisodeTitle());
-        values.put(KEY_LAST_UPDATE, show.getLastUpdate() == null ? null : show.getLastUpdate().getTime());
+        values.put(FIELD_STORE, show.getStore());
+        values.put(FIELD_SHOW_ID, show.getShowId());
+        values.put(FIELD_SHOW_NAME, show.getShowName());
+        values.put(FIELD_NEXT_EPISODE_SEASON, show.getNextEpisodeSeason());
+        values.put(FIELD_NEXT_EPISODE_NUMBER, show.getNextEpisodeNumber());
+        values.put(FIELD_NEXT_EPISODE_TITLE, show.getNextEpisodeTitle());
+        values.put(FIELD_LAST_UPDATE, show.getLastUpdate() == null ? null : show.getLastUpdate().getTime());
         return values;
     }
     
     private String[] idValues(FavoriteShow show) {
         return new String[] {String.valueOf(show.getId())};
     }
-    
+
+    private String[] getAllFields() {
+        return new String[] {
+                FIELD_ID, FIELD_STORE, FIELD_SHOW_ID, FIELD_SHOW_NAME,
+                FIELD_NEXT_EPISODE_SEASON, FIELD_NEXT_EPISODE_NUMBER, FIELD_NEXT_EPISODE_TITLE,
+                FIELD_LAST_UPDATE
+        };
+    }
+
     private Integer getCursorInteger(Cursor cursor, String field) {
         final int columnIndex = cursor.getColumnIndex(field);
         return cursor.isNull(columnIndex) ? null : cursor.getInt(columnIndex);
@@ -77,78 +83,63 @@ public class FavoriteShowStore extends SQLiteOpenHelper {
         return cursor.isNull(columnIndex) ? null : new Date(cursor.getLong(columnIndex));
     }
 
-    public void addShow(FavoriteShow show) throws StoreException {
-        final SQLiteDatabase db = getWritableDatabase();
+    private FavoriteShow buildItem(Cursor cursor) {
+        return new FavoriteShow(
+                getCursorInteger(cursor, FIELD_ID),
+                cursor.getString(cursor.getColumnIndex(FIELD_STORE)),
+                cursor.getString(cursor.getColumnIndex(FIELD_SHOW_ID)),
+                cursor.getString(cursor.getColumnIndex(FIELD_SHOW_NAME)),
+                getCursorInteger(cursor, FIELD_NEXT_EPISODE_SEASON),
+                getCursorInteger(cursor, FIELD_NEXT_EPISODE_NUMBER),
+                cursor.getString(cursor.getColumnIndex(FIELD_NEXT_EPISODE_TITLE)),
+                getCursorDate(cursor, FIELD_LAST_UPDATE)
+        );
+    }
+
+    @Override
+    public void add(SQLiteDatabase db, FavoriteShow show) {
+        final long id = db.insertOrThrow(TABLE_NAME, null, buildContentValues(show));
+        show.setId((int) id);
+    }
+
+    @Override
+    public FavoriteShow find(SQLiteDatabase db, FavoriteShow item) {
+        Cursor cursor = db.query(TABLE_NAME, getAllFields(), FIELD_ID + "=?", idValues(item), null, null, null);
         try {
-            final long id = db.insertOrThrow(TABLE_SHOWS, null, buildContentValues(show));
-            show.setId((int) id);
-        } catch(SQLException e) {
-            throw new StoreException("Could not insert show", e);
+            if (cursor.moveToFirst()) {
+                return buildItem(cursor);
+            } else {
+                return null;
+            }
         } finally {
-            db.close();
+            cursor.close();
         }
     }
-    
-    public List<FavoriteShow> getAllShows() throws StoreException {
-        final SQLiteDatabase db = getWritableDatabase();
-        final List<FavoriteShow> showList = new ArrayList<>();
-        Cursor cursor = null;
+
+    @Override
+    public List<FavoriteShow> getAll(SQLiteDatabase db) {
+        Cursor cursor = db.query(TABLE_NAME, getAllFields(), null, null, null, null, FIELD_LAST_UPDATE + " DESC, " + FIELD_SHOW_NAME);
         try {
-            cursor = db.query(
-                    TABLE_SHOWS,
-                    new String[] {
-                            KEY_ID, KEY_STORE, KEY_SHOW_ID, KEY_SHOW_NAME,
-                            KEY_NEXT_EPISODE_SEASON, KEY_NEXT_EPISODE_NUMBER, KEY_NEXT_EPISODE_TITLE,
-                            KEY_LAST_UPDATE
-                    },
-                    null, null, null, null,
-                    KEY_LAST_UPDATE + " DESC, " + KEY_SHOW_NAME);
-            if(cursor.moveToFirst()) {
+            final List<FavoriteShow> showList = new ArrayList<>();
+            if (cursor.moveToFirst()) {
                 do {
-                    FavoriteShow show = new FavoriteShow(
-                            getCursorInteger(cursor, KEY_ID),
-                            cursor.getString(cursor.getColumnIndex(KEY_STORE)),
-                            cursor.getString(cursor.getColumnIndex(KEY_SHOW_ID)),
-                            cursor.getString(cursor.getColumnIndex(KEY_SHOW_NAME)),
-                            getCursorInteger(cursor, KEY_NEXT_EPISODE_SEASON),
-                            getCursorInteger(cursor, KEY_NEXT_EPISODE_NUMBER),
-                            cursor.getString(cursor.getColumnIndex(KEY_NEXT_EPISODE_TITLE)),
-                            getCursorDate(cursor, KEY_LAST_UPDATE)
-                    );
-                    showList.add(show);
+                    showList.add(buildItem(cursor));
                 } while (cursor.moveToNext());
             }
-        } catch(SQLException e) {
-            throw new StoreException("Could not retrieve shows", e);
+            return showList;
         } finally {
-            if(cursor != null) {
-                cursor.close();
-            }
-            db.close();
-        }
-        return showList;
-    }
-    
-    public void updateShow(FavoriteShow show) throws StoreException {
-        SQLiteDatabase db = getWritableDatabase();
-        try {
-            db.update("shows", buildContentValues(show), "id=?", idValues(show));
-        } catch(SQLException e) {
-            throw new StoreException("Could not update show", e);
-        } finally {
-            db.close();
+            cursor.close();
         }
     }
-    
-    public void deleteShow(FavoriteShow show) throws StoreException {
-        SQLiteDatabase db = getWritableDatabase();
-        try {
-            db.delete("shows", "id=?", idValues(show));
-            show.setId(null);
-        } catch(SQLException e) {
-            throw new StoreException("Could not delete show", e);
-        } finally {
-            db.close();
-        }
+
+    @Override
+    public void update(SQLiteDatabase db, FavoriteShow show) {
+        db.update(TABLE_NAME, buildContentValues(show), FIELD_ID + "=?", idValues(show));
+    }
+
+    @Override
+    public void delete(SQLiteDatabase db, FavoriteShow show) {
+        db.delete(TABLE_NAME, FIELD_ID + "=?", idValues(show));
+        show.setId(null);
     }
 }

@@ -5,7 +5,7 @@ import java.util.List;
 import com.acme.tvshows.android.service.Link;
 import com.acme.tvshows.android.service.ShowServiceException;
 import com.acme.tvshows.android.service.TvShowClient;
-import com.acme.tvshows.android.store.FavoriteShow;
+import com.acme.tvshows.android.model.FavoriteShow;
 import android.util.Log;
 import android.widget.ListView;
 import android.widget.ArrayAdapter;
@@ -83,7 +83,7 @@ public class EpisodeActivity extends Activity {
         
         protected Boolean doInBackground(String... params) {
             try {
-                links = client.getEpisodeLinks(show.getStore(), show.getShowId(), season, episodeNumber);
+                links = client.getEpisodeLinks(EpisodeActivity.this, show.getStore(), show.getShowId(), season, episodeNumber);
                 return true;
             } catch(ShowServiceException e) {
                 Log.e("TvShowClient", e.getMessage(), e);
@@ -113,7 +113,7 @@ public class EpisodeActivity extends Activity {
         protected Boolean doInBackground(String... params) {
             try {
                 String linkId = params[0];
-                url = client.getLinkUrl(show.getStore(), show.getShowId(), season, episodeNumber, linkId);
+                url = client.getLinkUrl(EpisodeActivity.this, show.getStore(), show.getShowId(), season, episodeNumber, linkId);
                 return true;
             } catch(ShowServiceException e) {
                 Log.e("TvShowClient", e.getMessage(), e);
@@ -177,15 +177,15 @@ public class EpisodeActivity extends Activity {
         }
         
         private boolean setNextEpisode(FavoriteShow show, int seasonNumber, int episodeNumber) throws ShowServiceException {
-            for(Episode episode : client.getSeasonEpisodes(show.getStore(), show.getShowId(), seasonNumber)) {
+            for(Episode episode : client.getSeasonEpisodes(EpisodeActivity.this, show.getStore(), show.getShowId(), seasonNumber)) {
                 if (episode.getNumber() == episodeNumber + 1) {
                     show.setNextEpisode(seasonNumber, episode.getNumber(), episode.getTitle());
                     return true;
                 }
             }
-            for (Season season : client.getShowSeasons(show.getStore(), show.getShowId())) {
+            for (Season season : client.getShowSeasons(EpisodeActivity.this, show.getStore(), show.getShowId())) {
                 if(season.getNumber() == seasonNumber + 1) {
-                    List<Episode> episodes = client.getSeasonEpisodes(show.getStore(), show.getShowId(), season.getNumber());
+                    List<Episode> episodes = client.getSeasonEpisodes(EpisodeActivity.this, show.getStore(), show.getShowId(), season.getNumber());
                     if (!episodes.isEmpty()) {
                         Episode episode = episodes.get(0);
                         show.setNextEpisode(season.getNumber(), episode.getNumber(), episode.getTitle());

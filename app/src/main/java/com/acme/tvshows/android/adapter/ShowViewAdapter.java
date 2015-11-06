@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.acme.tvshows.android.R;
-import com.acme.tvshows.android.store.FavoriteShow;
+import com.acme.tvshows.android.model.FavoriteShow;
 
 import java.text.SimpleDateFormat;
 import java.util.List;

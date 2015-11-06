@@ -5,10 +5,9 @@ import android.os.AsyncTask;
 import java.util.List;
 
 import com.acme.tvshows.android.adapter.ShowViewAdapter;
-import com.acme.tvshows.android.store.FavoriteShow;
+import com.acme.tvshows.android.model.FavoriteShow;
 import com.acme.tvshows.android.store.DatabaseManager;
 import android.widget.ListView;
-import android.widget.ArrayAdapter;
 import android.view.View;
 import android.widget.TextView;
 import android.app.Activity;

@@ -1,5 +1,10 @@
 package com.acme.tvshows.android.service;
 
+import android.content.Context;
+
+import com.acme.tvshows.android.model.Credentials;
+import com.acme.tvshows.android.store.DatabaseManager;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -67,16 +72,16 @@ public class TvShowClient {
         return result;
     }
 
-    private String getToken(String store) throws ShowServiceException {
+    private String getToken(Context context, String store) throws ShowServiceException {
         String token = tokens.get(store);
         if (token == null) {
-            token = login(store, getLoginCredentials(store));
+            token = login(store, getLoginCredentials(context, store));
             tokens.put(store, token);
         }
         return token;
     }
 
-    private Map<String, String> getLoginCredentials(String storeCode) throws ShowServiceException {
+    private Map<String, String> getLoginCredentials(Context context, String storeCode) throws ShowServiceException {
         Store store = getStoreMap().get(storeCode);
         if (store == null) {
             throw new ShowServiceException("Unknown store: " + storeCode);
@@ -85,7 +90,11 @@ public class TvShowClient {
         if (loginParameters.isEmpty()) {
             return Collections.emptyMap();
         } else {
-            throw new ShowServiceException("Authenticated stores are not supported");
+            Credentials credentials = DatabaseManager.getInstance().getCredentials(context, storeCode);
+            if (credentials == null || !credentials.containsParameters(loginParameters)) {
+                throw new ShowServiceException("Missing credentials for store " + storeCode);
+            }
+            return credentials.getParameters();
         }
     }
 
@@ -98,11 +107,11 @@ public class TvShowClient {
         }
     }
 
-    public List<Show> findShows(String store, String searchString) throws ShowServiceException {
+    public List<Show> findShows(Context context, String store, String searchString) throws ShowServiceException {
         String url = null;
         final List<Show> result = new ArrayList<>();
         try {
-            url = String.format("/%s/searchshow?token=%s&q=%s", store, getToken(store), URLEncoder.encode(searchString, "utf-8"));
+            url = String.format("/%s/searchshow?token=%s&q=%s", store, getToken(context, store), URLEncoder.encode(searchString, "utf-8"));
             JSONArray response = callApiUrl(store, url);
             for (int i = 0; i < response.length(); i++) {
                 JSONObject obj = response.getJSONObject(i);
@@ -116,8 +125,8 @@ public class TvShowClient {
         return result;
     }
     
-    public List<Season> getShowSeasons(String store, String show) throws ShowServiceException {
-        final String url = String.format("/%s/show/%s?token=%s", store, show, getToken(store));
+    public List<Season> getShowSeasons(Context context, String store, String show) throws ShowServiceException {
+        final String url = String.format("/%s/show/%s?token=%s", store, show, getToken(context, store));
         final List<Season> result = new ArrayList<>();
         try {
             JSONArray response = callApiUrl(store, url);
@@ -130,8 +139,8 @@ public class TvShowClient {
         return result;
     }
     
-    public List<Episode> getSeasonEpisodes(String store, String show, int season) throws ShowServiceException {
-        final String url = String.format("/%s/show/%s/%d?token=%s", store, show, season, getToken(store));
+    public List<Episode> getSeasonEpisodes(Context context, String store, String show, int season) throws ShowServiceException {
+        final String url = String.format("/%s/show/%s/%d?token=%s", store, show, season, getToken(context, store));
         final List<Episode> result = new ArrayList<>();
         try {
             JSONArray response = callApiUrl(store, url);
@@ -145,8 +154,8 @@ public class TvShowClient {
         return result;
     }
     
-    public List<Link> getEpisodeLinks(String store, String show, int season, int episode) throws ShowServiceException {
-        final String url = String.format("/%s/show/%s/%d/%d?token=%s", store, show, season, episode, getToken(store));
+    public List<Link> getEpisodeLinks(Context context, String store, String show, int season, int episode) throws ShowServiceException {
+        final String url = String.format("/%s/show/%s/%d/%d?token=%s", store, show, season, episode, getToken(context, store));
         final List<Link> result = new ArrayList<>();
         try {
             JSONArray response = callApiUrl(store, url);
@@ -162,8 +171,8 @@ public class TvShowClient {
         return result;
     }
     
-    public String getLinkUrl(String store, String show, int season, int episode, String link) throws ShowServiceException {
-        final String url = String.format("/%s/show/%s/%d/%d/%s?token=%s", store, show, season, episode, link, getToken(store));
+    public String getLinkUrl(Context context, String store, String show, int season, int episode, String link) throws ShowServiceException {
+        final String url = String.format("/%s/show/%s/%d/%d/%s?token=%s", store, show, season, episode, link, getToken(context, store));
         try {
             return callApiUrl(store, url).getString(0);
         } catch(JSONException e) {

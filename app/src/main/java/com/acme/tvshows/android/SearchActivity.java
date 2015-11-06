@@ -5,7 +5,7 @@ import java.util.List;
 import com.acme.tvshows.android.service.Show;
 import com.acme.tvshows.android.service.ShowServiceException;
 import com.acme.tvshows.android.service.TvShowClient;
-import com.acme.tvshows.android.store.FavoriteShow;
+import com.acme.tvshows.android.model.FavoriteShow;
 import android.util.Log;
 import android.widget.ListView;
 import android.widget.ArrayAdapter;
@@ -63,7 +63,7 @@ public class SearchActivity extends Activity {
         protected Boolean doInBackground(String... params) {
             try {
                 String searchString = params[0];
-                shows = client.findShows(STORE, searchString);
+                shows = client.findShows(SearchActivity.this, STORE, searchString);
                 if (shows.isEmpty()) {
                     errorMessage = getResources().getString(R.string.noresults);
                 }
