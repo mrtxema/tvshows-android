@@ -28,6 +28,9 @@ public class ShowViewAdapter extends ArrayAdapter<FavoriteShow> {
         TextView txtTitle = (TextView) rowView.findViewById(R.id.title);
         txtTitle.setText(item.getShowName());
 
+        TextView txtStore = (TextView) rowView.findViewById(R.id.store);
+        txtStore.setText(item.getStore());
+
         if (item.hasNextEpisode()) {
             TextView txtEpisode = (TextView) rowView.findViewById(R.id.episode);
             txtEpisode.setText(String.format("%dx%d %s", item.getNextEpisodeSeason(), item.getNextEpisodeNumber(), item.getNextEpisodeTitle()));

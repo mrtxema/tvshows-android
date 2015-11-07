@@ -19,4 +19,9 @@ public class Store {
     public List<String> getLoginParameters() {
         return loginParameters;
     }
+
+    @Override
+    public String toString() {
+        return code;
+    }
 }

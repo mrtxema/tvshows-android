@@ -10,9 +10,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -28,6 +27,7 @@ public class TvShowClient {
 
     private final RestApiClient restApiClient;
     private final ExpirableCache<String,String> tokens;
+    private Map<String, Store> stores;
 
     public static TvShowClient getInstance() {
         return instance;
@@ -52,24 +52,27 @@ public class TvShowClient {
         }
     }
 
-    public Collection<Store> getAllStores() throws ShowServiceException {
-        return getStoreMap().values();
+    public List<Store> getAllStores() throws ShowServiceException {
+        return new ArrayList<>(getStoreMap().values());
     }
 
-    private Map<String,Store> getStoreMap() throws ShowServiceException {
-        final String url = "";
-        final Map<String,Store> result = new HashMap<>();
-        try {
-            JSONArray response = callApiUrl(null, url);
-            for (int i = 0; i < response.length(); i++) {
-                JSONObject obj = response.getJSONObject(i);
-                String code = obj.getString("code");
-                result.put(code, new Store(code, restApiClient.asStringList(obj.getJSONArray("loginParameters"))));
+    private synchronized Map<String,Store> getStoreMap() throws ShowServiceException {
+        if (stores == null) {
+            final String url = "";
+            final Map<String, Store> result = new LinkedHashMap<>();
+            try {
+                JSONArray response = callApiUrl(null, url);
+                for (int i = 0; i < response.length(); i++) {
+                    JSONObject obj = response.getJSONObject(i);
+                    String code = obj.getString("code");
+                    result.put(code, new Store(code, restApiClient.asStringList(obj.getJSONArray("loginParameters"))));
+                }
+            } catch (JSONException e) {
+                throw new ShowServiceException("Can't parse response from url: " + url, e);
             }
-        } catch (JSONException e) {
-            throw new ShowServiceException("Can't parse response from url: " + url, e);
+            stores = result;
         }
-        return result;
+        return stores;
     }
 
     private String getToken(Context context, String store) throws ShowServiceException {

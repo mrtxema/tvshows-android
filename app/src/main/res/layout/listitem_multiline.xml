@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <LinearLayout android:id="@id/linearLayout3" android:layout_width="fill_parent" android:layout_height="wrap_content"
+    <LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content"
         android:paddingStart="?android:attr/listPreferredItemPaddingStart"
         android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
         >
@@ -15,6 +15,27 @@
             android:layout_height="wrap_content"
             android:textStyle="bold" />
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="0.1" />
+        <TextView android:id="@+id/store"
+            android:textSize="10dp"
+            android:textColor="#ff8f8f8f"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:width="200px"
+            android:gravity="right" />
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content"
+        android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+        android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+        >
+        <TextView android:id="@+id/episode"
+            android:textAppearance="?android:attr/textAppearanceListItemSmall"
+            android:textColor="#ff5f5f5f"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="italic"
+            android:textSize="14dp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="0.1" />
         <TextView android:id="@+id/last_update"
             android:textSize="10dp"
             android:textColor="#ff8f8f8f"
@@ -22,15 +43,5 @@
             android:layout_height="wrap_content"
             android:width="160px" />
     </LinearLayout>
-
-    <TextView android:id="@+id/episode"
-        android:textAppearance="?android:attr/textAppearanceListItemSmall"
-        android:textColor="#ff5f5f5f"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="?android:attr/listPreferredItemPaddingStart"
-        android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
-        android:textStyle="italic"
-        android:textSize="14dp" />
 
 </LinearLayout>
