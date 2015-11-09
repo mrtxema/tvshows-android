@@ -152,11 +152,11 @@ public class EpisodeActivity extends Activity {
             try {
                 if (seen && !show.isEpisodeSeen(season, episodeNumber)) {
                     setNextEpisode(show, season, episodeNumber);
-                    DatabaseManager.getInstance().storeShow(EpisodeActivity.this, show);
+                    DatabaseManager.getInstance().saveShow(EpisodeActivity.this, show);
                 }
                 if (!seen && show.isSaved() && show.isEpisodeSeen(season, episodeNumber)) {
                     show.setNextEpisode(season, episodeNumber, episodeTitle);
-                    DatabaseManager.getInstance().storeShow(EpisodeActivity.this, show);
+                    DatabaseManager.getInstance().saveShow(EpisodeActivity.this, show);
                 }
             } catch(ShowServiceException e) {
                 Log.e("TvShowClient", e.getMessage(), e);
@@ -170,7 +170,7 @@ public class EpisodeActivity extends Activity {
             if (result) {
                 Intent intent = new Intent();
                 intent.putExtra("show", show);
-                setResult(-1, intent);
+                setResult(RESULT_OK, intent);
             } else {
                 txtMessages.setText(errorMessage);
             }

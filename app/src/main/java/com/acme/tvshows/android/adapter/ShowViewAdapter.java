@@ -43,5 +43,4 @@ public class ShowViewAdapter extends ArrayAdapter<FavoriteShow> {
 
         return rowView;
     }
-
 }

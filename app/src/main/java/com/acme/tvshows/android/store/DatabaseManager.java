@@ -11,8 +11,8 @@ import com.acme.tvshows.android.model.Credentials;
 import com.acme.tvshows.android.model.FavoriteShow;
 
 public class DatabaseManager {
-    private List<FavoriteShow> shows;
-    private Map<String, Credentials> credentials;
+    private List<FavoriteShow> showsCache;
+    private Map<String, Credentials> credentialsCache;
     private static final DatabaseManager instance = new DatabaseManager();
     
     private DatabaseManager() {
@@ -27,24 +27,24 @@ public class DatabaseManager {
     }
     
     public List<FavoriteShow> getAllShows(Context context) {
-        if (shows == null) {
+        if (showsCache == null) {
             try {
-                shows = getTvShowsDatabase(context).getAll(FavoriteShow.class);
+                showsCache = getTvShowsDatabase(context).getAll(FavoriteShow.class);
             } catch(StoreException e) {
                 Log.e("TvShows", "Error retrieving favorite shows", e);
             }
         }
-        return shows;
+        return showsCache;
     }
     
-    public void storeShow(Context context, FavoriteShow show) {
+    public void saveShow(Context context, FavoriteShow show) {
         try {
             if (show.isSaved()) {
                 getTvShowsDatabase(context).update(show);
             } else {
                 getTvShowsDatabase(context).add(show);
             }
-            shows = null;
+            showsCache = null;
         } catch(StoreException e) {
             Log.e("TvShows", "Error storing favorite show", e);
         }
@@ -53,24 +53,33 @@ public class DatabaseManager {
     public void deleteShow(Context context, FavoriteShow show) {
         try {
             getTvShowsDatabase(context).delete(show);
-            shows = null;
+            showsCache = null;
         } catch(StoreException e) {
             Log.e("TvShows", "Error deleting favorite show", e);
         }
     }
 
     public Credentials getCredentials(Context context, String store) {
-        if (credentials == null) {
+        if (credentialsCache == null) {
             try {
                 Map<String, Credentials> credentialsMap = new HashMap<>();
                 for (Credentials item : getTvShowsDatabase(context).getAll(Credentials.class)) {
                     credentialsMap.put(item.getStore(), item);
                 }
-                credentials = credentialsMap;
+                credentialsCache = credentialsMap;
             } catch(StoreException e) {
                 Log.e("TvShows", "Error retrieving credentials", e);
             }
         }
-        return credentials.get(store);
+        return credentialsCache.get(store);
+    }
+
+    public void saveCredentials(Context context, Credentials credentials) {
+        try {
+            getTvShowsDatabase(context).add(credentials);
+            credentialsCache = null;
+        } catch(StoreException e) {
+            Log.e("TvShows", "Error storing credentials", e);
+        }
     }
 }

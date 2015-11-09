@@ -126,7 +126,7 @@ public class ShowActivity extends Activity {
         protected Boolean doInBackground(Boolean... params) {
             boolean add = params[0];
             if (add && !show.isSaved()) {
-                DatabaseManager.getInstance().storeShow(ShowActivity.this, show);
+                DatabaseManager.getInstance().saveShow(ShowActivity.this, show);
             }
             if (!add && show.isSaved()) {
                 DatabaseManager.getInstance().deleteShow(ShowActivity.this, show);

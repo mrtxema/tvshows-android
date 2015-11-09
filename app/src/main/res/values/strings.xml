@@ -9,4 +9,7 @@
     <string name="search">Search</string>
     <string name="show">TV show</string>
     <string name="chooser_title">Select app to play episode</string>
+    <string name="credentialsTitle">%s login</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">Ok</string>
 </resources>

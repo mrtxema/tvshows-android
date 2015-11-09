@@ -8,6 +8,7 @@
             </intent-filter>
         </activity>
         <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SearchActivity" android:windowSoftInputMode="stateHidden"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.CredentialsActivity"/>
         <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.ShowActivity"/>
         <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SeasonActivity"/>
         <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.EpisodeActivity"/>

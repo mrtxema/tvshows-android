@@ -72,7 +72,7 @@ public class SeasonActivity extends Activity {
                 datasetChanged = true;
                 Intent intent = new Intent();
                 intent.putExtra("show", show);
-                setResult(-1, intent);
+                setResult(RESULT_OK, intent);
             }
         }
     }
