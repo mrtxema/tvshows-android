@@ -35,11 +35,20 @@ public class TvShowsDatabase extends SQLiteOpenHelper {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private <T> DatabaseStore<T> getDatabaseStore(Class<T> clazz) {
+        return (DatabaseStore<T>) stores.get(clazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> DatabaseStore<T> getDatabaseStore(T item) {
+        return (DatabaseStore<T>) stores.get(item.getClass());
+    }
+
     public <T> void add(T item) throws StoreException {
-        DatabaseStore<T> store = (DatabaseStore<T>) stores.get(item.getClass());
         SQLiteDatabase db = getWritableDatabase();
         try {
-            store.add(db, item);
+            getDatabaseStore(item).add(db, item);
         } catch(SQLException e) {
             throw new StoreException("Could not insert " + item.getClass().getSimpleName(), e);
         } finally {
@@ -48,10 +57,9 @@ public class TvShowsDatabase extends SQLiteOpenHelper {
     }
 
     public <T> List<T> getAll(Class<T> clazz) throws StoreException {
-        DatabaseStore<T> store = (DatabaseStore<T>) stores.get(clazz);
         SQLiteDatabase db = getReadableDatabase();
         try {
-            return store.getAll(db);
+            return getDatabaseStore(clazz).getAll(db);
         } catch(SQLException e) {
             throw new StoreException("Could not retrieve " + clazz.getSimpleName(), e);
         } finally {
@@ -60,10 +68,9 @@ public class TvShowsDatabase extends SQLiteOpenHelper {
     }
 
     public <T> void update(T item) throws StoreException {
-        DatabaseStore<T> store = (DatabaseStore<T>) stores.get(item.getClass());
         SQLiteDatabase db = getWritableDatabase();
         try {
-            store.update(db, item);
+            getDatabaseStore(item).update(db, item);
         } catch(SQLException e) {
             throw new StoreException("Could not update " + item.getClass().getSimpleName(), e);
         } finally {
@@ -72,10 +79,9 @@ public class TvShowsDatabase extends SQLiteOpenHelper {
     }
 
     public <T> void delete(T item) throws StoreException {
-        DatabaseStore<T> store = (DatabaseStore<T>) stores.get(item.getClass());
         SQLiteDatabase db = getWritableDatabase();
         try {
-            store.delete(db, item);
+            getDatabaseStore(item).delete(db, item);
         } catch(SQLException e) {
             throw new StoreException("Could not delete " + item.getClass().getSimpleName(), e);
         } finally {

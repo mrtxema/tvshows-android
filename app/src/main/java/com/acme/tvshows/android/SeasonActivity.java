@@ -13,13 +13,12 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.view.View;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.AdapterView;
 
-public class SeasonActivity extends Activity {
-    private static final int EPISODE = 1;
+public class SeasonActivity extends BaseActivity {
+    private static final int EPISODE_REQUEST = 1;
     private ArrayAdapter<Episode> adapter;
     private TvShowClient client;
     private boolean datasetChanged;
@@ -33,8 +32,7 @@ public class SeasonActivity extends Activity {
     }
     
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_season);
+        super.onCreate(savedInstanceState, R.layout.activity_season);
         client = TvShowClient.getInstance();
         show = getIntent().getExtras().getParcelable("show");
         season = getIntent().getExtras().getInt("season");
@@ -50,7 +48,7 @@ public class SeasonActivity extends Activity {
                 intent.putExtra("season", season);
                 intent.putExtra("episodeNumber", episode.getNumber());
                 intent.putExtra("episodeTitle", episode.getTitle());
-                startActivityForResult(intent, EPISODE);
+                startActivityForResult(intent, EPISODE_REQUEST);
             }
         });
         new FindEpisodesTask().execute();
@@ -65,7 +63,7 @@ public class SeasonActivity extends Activity {
     }
     
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == EPISODE && data != null) {
+        if (requestCode == EPISODE_REQUEST && data != null) {
             FavoriteShow resultShow = data.getExtras().getParcelable("show");
             if (resultShow != null) {
                 show = resultShow;
@@ -108,7 +106,7 @@ public class SeasonActivity extends Activity {
             } else {
                 txtMessages.setText(errorMessage);
             }
-            findViewById(R.id.seasonLoadingPanel).setVisibility(View.GONE);
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         }
     }
 }

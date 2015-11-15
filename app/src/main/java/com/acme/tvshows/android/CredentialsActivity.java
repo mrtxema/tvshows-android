@@ -1,9 +1,9 @@
 package com.acme.tvshows.android;
 
-import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -14,19 +14,23 @@ import android.widget.TextView;
 import com.acme.tvshows.android.model.Credentials;
 import com.acme.tvshows.android.service.Store;
 import com.acme.tvshows.android.store.DatabaseManager;
+import com.acme.tvshows.android.store.StoreException;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class CredentialsActivity extends Activity {
+public class CredentialsActivity extends BaseActivity {
     private Store store;
+    private Credentials credentials;
     private Map<String, EditText> formFields;
+    private TextView txtMessages;
 
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_credentials);
+        super.onCreate(savedInstanceState, R.layout.activity_credentials);
         store = getIntent().getExtras().getParcelable("store");
+        credentials = getIntent().getExtras().getParcelable("credentials");
 
+        txtMessages = (TextView) findViewById(R.id.txtMessages);
         TextView credentialsTitle = (TextView) findViewById(R.id.credentialsTitle);
         credentialsTitle.setText(getString(R.string.credentialsTitle, capitalize(store.getCode())));
 
@@ -41,18 +45,21 @@ public class CredentialsActivity extends Activity {
         Button btnOk = (Button) findViewById(R.id.btnOk);
         btnOk.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                new SaveCredentialsTask().execute();
+                new SaveCredentialsTask().execute() ;
             }
         });
 
         formFields = new HashMap<>();
         LinearLayout lstParameters = (LinearLayout) findViewById(R.id.lstParameters);
         for (String parameter : store.getLoginParameters()) {
-            lstParameters.addView(inflateView(parameter));
+            String parameterValue = credentials == null ? null : credentials.getParameters().get(parameter);
+            lstParameters.addView(inflateView(parameter, parameterValue));
         }
+
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
     }
 
-    public View inflateView(String item) {
+    public View inflateView(String item, String value) {
         LayoutInflater inflater = LayoutInflater.from(this);
         View rowView = inflater.inflate(R.layout.listitem_form, null, false);
         TextView fieldLabel = (TextView) rowView.findViewById(R.id.fieldLabel);
@@ -60,6 +67,9 @@ public class CredentialsActivity extends Activity {
         EditText formField = (EditText) rowView.findViewById(R.id.fieldInput);
         if (item.toLowerCase().contains("password")) {
             formField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        }
+        if (value != null) {
+            formField.setText(value);
         }
         formFields.put(item, formField);
         return rowView;
@@ -70,6 +80,7 @@ public class CredentialsActivity extends Activity {
     }
 
     private class SaveCredentialsTask extends AsyncTask<String,Integer,Boolean> {
+        private String errorMessage;
 
         private Map<String, String> getFormParameters() {
             Map<String, String> result = new HashMap<>();
@@ -80,10 +91,24 @@ public class CredentialsActivity extends Activity {
         }
 
         @Override
+        protected void onPreExecute() {
+            txtMessages.setText("");
+        }
+
+        @Override
         protected Boolean doInBackground(String... params) {
-            Credentials credentials = new Credentials(store.getCode(), getFormParameters());
-            DatabaseManager.getInstance().saveCredentials(CredentialsActivity.this, credentials);
-            return true;
+            Credentials newCredentials = new Credentials(store.getCode(), getFormParameters());
+            try {
+                if (credentials != null) {
+                    DatabaseManager.getInstance().deleteCredentials(CredentialsActivity.this, credentials);
+                }
+                DatabaseManager.getInstance().saveCredentials(CredentialsActivity.this, newCredentials);
+                return true;
+            } catch (StoreException e) {
+                Log.e("TvShowClient", e.getMessage(), e);
+                errorMessage = e.getMessage();
+            }
+            return false;
         }
 
         @Override
@@ -91,6 +116,8 @@ public class CredentialsActivity extends Activity {
             if (result) {
                 setResult(RESULT_OK);
                 CredentialsActivity.this.finish();
+            } else {
+                txtMessages.setText(errorMessage);
             }
         }
     }

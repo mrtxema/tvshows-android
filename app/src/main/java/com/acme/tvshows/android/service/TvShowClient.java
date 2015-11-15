@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.acme.tvshows.android.model.Credentials;
 import com.acme.tvshows.android.store.DatabaseManager;
+import com.acme.tvshows.android.store.StoreException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -93,9 +94,14 @@ public class TvShowClient {
         if (loginParameters.isEmpty()) {
             return Collections.emptyMap();
         } else {
-            Credentials credentials = DatabaseManager.getInstance().getCredentials(context, storeCode);
-            if (credentials == null || !credentials.containsParameters(loginParameters)) {
-                throw new ShowServiceException("Missing credentials for store " + storeCode);
+            Credentials credentials = null;
+            try {
+                credentials = DatabaseManager.getInstance().getCredentials(context, storeCode);
+                if (credentials == null || !credentials.containsParameters(loginParameters)) {
+                    throw new ShowServiceException("Missing credentials for store " + storeCode);
+                }
+            } catch (StoreException e) {
+                throw new ShowServiceException("Can't retrieve credentials for store " + storeCode, e);
             }
             return credentials.getParameters();
         }

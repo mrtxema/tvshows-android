@@ -10,6 +10,7 @@ import com.acme.tvshows.android.service.Store;
 import com.acme.tvshows.android.service.TvShowClient;
 import com.acme.tvshows.android.model.FavoriteShow;
 import com.acme.tvshows.android.store.DatabaseManager;
+import com.acme.tvshows.android.store.StoreException;
 
 import android.util.Log;
 import android.widget.ListView;
@@ -17,16 +18,15 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.view.View;
-import android.app.Activity;
 import android.widget.EditText;
 import android.os.Bundle;
 import android.content.Intent;
 import android.widget.ImageButton;
 import android.widget.AdapterView;
 
-public class SearchActivity extends Activity {
+public class SearchActivity extends BaseActivity {
     private static final String DEFAULT_STORE = "seriesyonkis";
-    private static final int CREDENTIALS = 1;
+    private static final int CREDENTIALS_REQUEST = 3;
     private TvShowClient client;
     private ListView lstShows;
     private TextView txtMessages;
@@ -35,15 +35,13 @@ public class SearchActivity extends Activity {
     private Store selectedStore;
 
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search);
+        super.onCreate(savedInstanceState, R.layout.activity_search);
         txtShow = (EditText) findViewById(R.id.txtShow);
         selectProvider = (Spinner) findViewById(R.id.selectProvider);
         txtMessages = (TextView) findViewById(R.id.txtMessages);
         lstShows = (ListView) findViewById(R.id.lstShows);
         client = TvShowClient.getInstance();
 
-        txtShow.setText(getIntent().getExtras().getString("searchString"));
         txtShow.setSelection(txtShow.getText().length());
 
         selectProvider.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -85,7 +83,7 @@ public class SearchActivity extends Activity {
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == CREDENTIALS) {
+        if (requestCode == CREDENTIALS_REQUEST) {
             if (resultCode == RESULT_OK) {
                 selectedStore = Store.class.cast(selectProvider.getSelectedItem());
             } else {
@@ -131,6 +129,7 @@ public class SearchActivity extends Activity {
             } else {
                 txtMessages.setText(errorMessage);
             }
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         }
     }
 
@@ -139,7 +138,7 @@ public class SearchActivity extends Activity {
         private List<Show> shows;
         
         protected void onPreExecute() {
-            findViewById(R.id.searchLoadingPanel).setVisibility(View.VISIBLE);
+            findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
             txtMessages.setText("");
         }
         
@@ -165,31 +164,47 @@ public class SearchActivity extends Activity {
             } else {
                 txtMessages.setText(errorMessage);
             }
-            findViewById(R.id.searchLoadingPanel).setVisibility(View.GONE);
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         }
     }
 
     private class RetrieveCredentialsTask extends AsyncTask<String,Integer,Boolean> {
         private final Store store;
         private Credentials credentials;
+        private String errorMessage;
 
         private RetrieveCredentialsTask(Store store) {
             this.store = store;
         }
 
         @Override
+        protected void onPreExecute() {
+            txtMessages.setText("");
+        }
+
+        @Override
         protected Boolean doInBackground(String... params) {
-            credentials = DatabaseManager.getInstance().getCredentials(SearchActivity.this, store.getCode());
-            return true;
+            try {
+                credentials = DatabaseManager.getInstance().getCredentials(SearchActivity.this, store.getCode());
+                return true;
+            } catch (StoreException e) {
+                Log.e("TvShowClient", e.getMessage(), e);
+                errorMessage = e.getMessage();
+            }
+            return false;
         }
 
         protected void onPostExecute(Boolean result) {
-            if (result && !store.getLoginParameters().isEmpty() && (credentials == null || !credentials.containsParameters(store.getLoginParameters()))) {
-                Intent intent = new Intent(SearchActivity.this, CredentialsActivity.class);
-                intent.putExtra("store", store);
-                startActivityForResult(intent, CREDENTIALS);
+            if (result) {
+                if (!store.getLoginParameters().isEmpty() && (credentials == null || !credentials.containsParameters(store.getLoginParameters()))) {
+                    Intent intent = new Intent(SearchActivity.this, CredentialsActivity.class);
+                    intent.putExtra("store", store);
+                    startActivityForResult(intent, CREDENTIALS_REQUEST);
+                } else {
+                    selectedStore = store;
+                }
             } else {
-                selectedStore = store;
+                txtMessages.setText(errorMessage);
             }
         }
     }

@@ -16,14 +16,15 @@ import android.content.Intent;
 import com.acme.tvshows.android.service.Episode;
 import com.acme.tvshows.android.service.Season;
 import com.acme.tvshows.android.store.DatabaseManager;
-import android.app.Activity;
+import com.acme.tvshows.android.store.StoreException;
+
 import android.os.Bundle;
 import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
-public class EpisodeActivity extends Activity {
+public class EpisodeActivity extends BaseActivity {
     private TvShowClient client;
     private int episodeNumber;
     private String episodeTitle;
@@ -33,8 +34,7 @@ public class EpisodeActivity extends Activity {
     private TextView txtMessages;
     
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_episode);
+        super.onCreate(savedInstanceState, R.layout.activity_episode);
         client = TvShowClient.getInstance();
         show = getIntent().getExtras().getParcelable("show");
         season = getIntent().getExtras().getInt("season");
@@ -52,7 +52,7 @@ public class EpisodeActivity extends Activity {
             }
         });
         ImageButton btnUp = (ImageButton) findViewById(R.id.btnUp);
-        if(directFromMain) {
+        if (directFromMain) {
             btnUp.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     Intent intent = new Intent(EpisodeActivity.this, ShowActivity.class);
@@ -93,12 +93,12 @@ public class EpisodeActivity extends Activity {
         }
         
         protected void onPostExecute(Boolean result) {
-            if(result) {
+            if (result) {
                 lstLinks.setAdapter(new ArrayAdapter<>(EpisodeActivity.this, android.R.layout.simple_list_item_1, links));
             } else {
                 txtMessages.setText(errorMessage);
             }
-            findViewById(R.id.episodeLoadingPanel).setVisibility(View.GONE);
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         }
     }
     
@@ -158,12 +158,12 @@ public class EpisodeActivity extends Activity {
                     show.setNextEpisode(season, episodeNumber, episodeTitle);
                     DatabaseManager.getInstance().saveShow(EpisodeActivity.this, show);
                 }
-            } catch(ShowServiceException e) {
+                return true;
+            } catch(ShowServiceException | StoreException e) {
                 Log.e("TvShowClient", e.getMessage(), e);
                 errorMessage = e.getMessage();
-                return false;
             }
-            return true;
+            return false;
         }
         
         protected void onPostExecute(Boolean result) {

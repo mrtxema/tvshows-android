@@ -14,15 +14,16 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.view.View;
 import com.acme.tvshows.android.store.DatabaseManager;
-import android.app.Activity;
+import com.acme.tvshows.android.store.StoreException;
+
 import android.widget.CheckBox;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.CompoundButton;
 import android.widget.AdapterView;
 
-public class ShowActivity extends Activity {
-    private static final int SEASON = 0x2;
+public class ShowActivity extends BaseActivity {
+    private static final int SEASON_REQUEST = 2;
     private ArrayAdapter<Season> adapter;
     private CheckBox btnAddShow;
     private TvShowClient client;
@@ -36,8 +37,7 @@ public class ShowActivity extends Activity {
     }
     
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_show);
+        super.onCreate(savedInstanceState, R.layout.activity_show);
         client = TvShowClient.getInstance();
         show = getIntent().getExtras().getParcelable("show");
         TextView title = (TextView) findViewById(R.id.title);
@@ -57,7 +57,7 @@ public class ShowActivity extends Activity {
                 Intent intent = new Intent(ShowActivity.this, SeasonActivity.class);
                 intent.putExtra("show", show);
                 intent.putExtra("season", season.getNumber());
-                startActivityForResult(intent, SEASON);
+                startActivityForResult(intent, SEASON_REQUEST);
             }
         });
         new FindSeasonsTask().execute();
@@ -72,7 +72,7 @@ public class ShowActivity extends Activity {
     }
     
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SEASON && data != null) {
+        if (requestCode == SEASON_REQUEST && data != null) {
             FavoriteShow resultShow = data.getExtras().getParcelable("show");
             if (resultShow != null) {
                 show = resultShow;
@@ -113,25 +113,39 @@ public class ShowActivity extends Activity {
             } else {
                 txtMessages.setText(errorMessage);
             }
-            findViewById(R.id.showLoadingPanel).setVisibility(View.GONE);
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         }
     }
     
     class ToggleFavoriteShowTask extends AsyncTask<Boolean,Integer,Boolean> {
+        private String errorMessage;
 
         protected void onPreExecute() {
             txtMessages.setText("");
         }
         
         protected Boolean doInBackground(Boolean... params) {
-            boolean add = params[0];
-            if (add && !show.isSaved()) {
-                DatabaseManager.getInstance().saveShow(ShowActivity.this, show);
+            try {
+                final boolean add = params[0];
+                if (add && !show.isSaved()) {
+                    DatabaseManager.getInstance().saveShow(ShowActivity.this, show);
+                }
+                if (!add && show.isSaved()) {
+                    DatabaseManager.getInstance().deleteShow(ShowActivity.this, show);
+                }
+                return true;
+            } catch (StoreException e) {
+                Log.e("TvShowClient", e.getMessage(), e);
+                errorMessage = e.getMessage();
             }
-            if (!add && show.isSaved()) {
-                DatabaseManager.getInstance().deleteShow(ShowActivity.this, show);
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (!result) {
+                txtMessages.setText(errorMessage);
             }
-            return true;
         }
     }
 }

@@ -1,16 +1,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.acme.tvshows.android" android:versionCode="2" android:versionName="2.1.0.Bob">
+
     <uses-permission android:name="android.permission.INTERNET"/>
-    <application android:allowBackup="true" android:icon="@drawable/ic_launcher" android:label="@string/app_name" android:theme="@style/AppTheme">
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.MainActivity" android:windowSoftInputMode="stateHidden">
+
+    <application android:allowBackup="true" android:icon="@drawable/ic_launcher" android:label="@string/app_name" android:theme="@style/CustomTheme">
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SearchActivity" android:windowSoftInputMode="stateHidden"/>
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.CredentialsActivity"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SearchActivity"/>
         <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.ShowActivity"/>
         <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SeasonActivity"/>
         <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.EpisodeActivity"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SettingsActivity"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.CredentialsActivity"/>
     </application>
+
 </manifest>
