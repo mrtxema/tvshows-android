@@ -2,41 +2,59 @@ package com.acme.tvshows.android;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.widget.ImageButton;
+import android.widget.TextView;
 
+import org.androidannotations.annotations.Click;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.annotations.ViewById;
+
+@EActivity
 public abstract class BaseActivity extends Activity {
+    @ViewById TextView txtMessages;
+    @ViewById View loadingPanel;
 
-    protected void onCreate(Bundle savedInstanceState, int layoutResId) {
-        super.onCreate(savedInstanceState);
+    @Override
+    public void setContentView(int layoutResID) {
         boolean customTitle = requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-        setContentView(layoutResId);
+        super.setContentView(layoutResID);
         if (customTitle) {
             getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.window_title);
         }
+    }
 
-        ImageButton btnHome = (ImageButton) findViewById(R.id.btnTitleHome);
-        btnHome.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                startActivityByClass(MainActivity.class, Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            }
-        });
+    @Click
+    void btnTitleHome() {
+        startActivityByClass(MainActivity_.class, Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    }
 
-        ImageButton btnSearchShow = (ImageButton) findViewById(R.id.btnTitleSearch);
-        btnSearchShow.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                startActivityByClass(SearchActivity.class);
-            }
-        });
+    @Click
+    void btnTitleSearch() {
+        startActivityByClass(SearchActivity_.class);
+    }
 
-        ImageButton btnSettings = (ImageButton) findViewById(R.id.btnTitleSettings);
-        btnSettings.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                startActivityByClass(SettingsActivity.class);
-            }
-        });
+    @Click
+    void btnTitleSettings() {
+        startActivityByClass(SettingsActivity_.class);
+    }
+
+    @UiThread
+    protected void setLoadingPanelVisibility(int visibility) {
+        loadingPanel.setVisibility(visibility);
+    }
+
+    @UiThread
+    protected void setMessage(String text) {
+        txtMessages.setText(text);
+        txtMessages.setVisibility(View.VISIBLE);
+    }
+
+    @UiThread
+    protected void clearMessage() {
+        txtMessages.setVisibility(View.GONE);
+        txtMessages.setText("");
     }
 
     protected void startActivityByClass(Class<? extends Activity> target, Integer flags) {

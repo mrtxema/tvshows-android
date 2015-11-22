@@ -6,6 +6,8 @@ import com.acme.tvshows.android.model.Credentials;
 import com.acme.tvshows.android.store.DatabaseManager;
 import com.acme.tvshows.android.store.StoreException;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,25 +21,17 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Map;
 
+@EBean(scope = EBean.Scope.Singleton)
 public class TvShowClient {
     private static final String SERVER = "http://tvshowsapi.herokuapp.com";
     private static final String BASE_PATH = "/tvshows/v2";
     private static final int SESSION_EXPIRED_ERROR = 6;
     private static final long TOKEN_EXPIRATION_TIME = 1740000;
-    private static final TvShowClient instance = new TvShowClient();
 
-    private final RestApiClient restApiClient;
-    private final ExpirableCache<String,String> tokens;
+    @Bean RestApiClient restApiClient;
+    @Bean DatabaseManager database;
+    private final ExpirableCache<String,String> tokens = new ExpirableCache<>(TOKEN_EXPIRATION_TIME);
     private Map<String, Store> stores;
-
-    public static TvShowClient getInstance() {
-        return instance;
-    }
-
-    private TvShowClient() {
-        restApiClient = new RestApiClient();
-        tokens = new ExpirableCache<>(TOKEN_EXPIRATION_TIME);
-    }
 
     private JSONArray callApiUrl(String store, String urlPath) throws JSONException, ShowServiceException {
         try {
@@ -96,7 +90,7 @@ public class TvShowClient {
         } else {
             Credentials credentials = null;
             try {
-                credentials = DatabaseManager.getInstance().getCredentials(context, storeCode);
+                credentials = database.getCredentials(context, storeCode);
                 if (credentials == null || !credentials.containsParameters(loginParameters)) {
                     throw new ShowServiceException("Missing credentials for store " + storeCode);
                 }

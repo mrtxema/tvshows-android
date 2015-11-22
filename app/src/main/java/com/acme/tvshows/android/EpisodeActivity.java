@@ -1,7 +1,7 @@
 package com.acme.tvshows.android;
 
-import android.os.AsyncTask;
 import java.util.List;
+
 import com.acme.tvshows.android.service.Link;
 import com.acme.tvshows.android.service.ShowServiceException;
 import com.acme.tvshows.android.service.TvShowClient;
@@ -18,183 +18,143 @@ import com.acme.tvshows.android.service.Season;
 import com.acme.tvshows.android.store.DatabaseManager;
 import com.acme.tvshows.android.store.StoreException;
 
-import android.os.Bundle;
-import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 
+import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.CheckedChange;
+import org.androidannotations.annotations.Click;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.Extra;
+import org.androidannotations.annotations.ItemClick;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.annotations.ViewById;
+
+@EActivity(R.layout.activity_episode)
 public class EpisodeActivity extends BaseActivity {
-    private TvShowClient client;
-    private int episodeNumber;
-    private String episodeTitle;
-    private ListView lstLinks;
-    private int season;
-    private FavoriteShow show;
-    private TextView txtMessages;
-    
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState, R.layout.activity_episode);
-        client = TvShowClient.getInstance();
-        show = getIntent().getExtras().getParcelable("show");
-        season = getIntent().getExtras().getInt("season");
-        episodeNumber = getIntent().getExtras().getInt("episodeNumber");
-        episodeTitle = getIntent().getExtras().getString("episodeTitle");
-        boolean directFromMain = getIntent().getBooleanExtra("direct", false);
-        ((TextView) findViewById(R.id.title)).setText(show.getShowName());
-        ((TextView) findViewById(R.id.subtitle)).setText(String.format("%dx%02d - %s", season, episodeNumber, episodeTitle));
-        txtMessages = (TextView) findViewById(R.id.txtMessages);
-        lstLinks = (ListView) findViewById(R.id.lstLinks);
-        lstLinks.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Link link = Link.class.cast(adapterView.getItemAtPosition(i));
-                new RetrieveUrlTask().execute(link.getId());
-            }
-        });
-        ImageButton btnUp = (ImageButton) findViewById(R.id.btnUp);
-        if (directFromMain) {
-            btnUp.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    Intent intent = new Intent(EpisodeActivity.this, ShowActivity.class);
-                    intent.putExtra("show", show);
-                    startActivity(intent);
-                }
-            });
-        } else {
+    @Bean DatabaseManager database;
+    @Bean TvShowClient client;
+    @Extra int episodeNumber;
+    @Extra String episodeTitle;
+    @Extra int season;
+    @Extra FavoriteShow show;
+    @Extra boolean direct = false;
+    @ViewById ListView lstLinks;
+    @ViewById TextView title;
+    @ViewById TextView subtitle;
+    @ViewById ImageButton btnUp;
+    @ViewById CheckBox btnMarkViewed;
+
+    @AfterViews
+    void initViews() {
+        title.setText(show.getShowName());
+        subtitle.setText(String.format("%dx%02d - %s", season, episodeNumber, episodeTitle));
+        btnMarkViewed.setChecked(show.isEpisodeSeen(season, episodeNumber));
+        if (!direct) {
             btnUp.setVisibility(View.GONE);
         }
-        CheckBox btnMarkViewed = (CheckBox) findViewById(R.id.btnMarkViewed);
-        btnMarkViewed.setChecked(show.isEpisodeSeen(season, episodeNumber));
-        btnMarkViewed.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                new ToggleEpisodeSeenTask().execute(checked);
-            }
-        });
-        new FindLinksTask().execute();
+        clearMessage();
+        findLinks();
     }
-    
-    class FindLinksTask extends AsyncTask<String,Integer,Boolean> {
-        private String errorMessage;
-        private List<Link> links;
-        
-        protected void onPreExecute() {
-            txtMessages.setText("");
-        }
-        
-        protected Boolean doInBackground(String... params) {
-            try {
-                links = client.getEpisodeLinks(EpisodeActivity.this, show.getStore(), show.getShowId(), season, episodeNumber);
-                return true;
-            } catch(ShowServiceException e) {
-                Log.e("TvShowClient", e.getMessage(), e);
-                errorMessage = e.getMessage();
-            }
-            return false;
-        }
-        
-        protected void onPostExecute(Boolean result) {
-            if (result) {
-                lstLinks.setAdapter(new ArrayAdapter<>(EpisodeActivity.this, android.R.layout.simple_list_item_1, links));
-            } else {
-                txtMessages.setText(errorMessage);
-            }
-            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        }
+
+    @ItemClick
+    void lstLinks(Link link) {
+        clearMessage();
+        retrieveUrl(link.getId());
     }
-    
-    class RetrieveUrlTask extends AsyncTask<String,Integer,Boolean> {
-        private String errorMessage;
-        private String url;
-        
-        protected void onPreExecute() {
-            txtMessages.setText("");
+
+    @Click
+    void btnUp() {
+        ShowActivity_.intent(this).show(show).start();
+    }
+
+    @CheckedChange
+    void btnMarkViewed(boolean checked) {
+        clearMessage();
+        toggleEpisodeSeen(checked);
+    }
+
+    @Background
+    void findLinks() {
+        try {
+            List<Link> links = client.getEpisodeLinks(this, show.getStore(), show.getShowId(), season, episodeNumber);
+            showLinks(links);
+        } catch(ShowServiceException e) {
+            Log.e("TvShowClient", e.getMessage(), e);
+            setMessage(e.getMessage());
         }
-        
-        protected Boolean doInBackground(String... params) {
-            try {
-                String linkId = params[0];
-                url = client.getLinkUrl(EpisodeActivity.this, show.getStore(), show.getShowId(), season, episodeNumber, linkId);
-                return true;
-            } catch(ShowServiceException e) {
-                Log.e("TvShowClient", e.getMessage(), e);
-                errorMessage = e.getMessage();
-            }
-            return false;
-        }
-        
-        private void openWebPage(String url) {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(Uri.parse(url), "video/mkv");
-            Intent chooserIntent = Intent.createChooser(intent, getResources().getText(R.string.chooser_title));
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(chooserIntent);
-            }
-        }
-        
-        protected void onPostExecute(Boolean result) {
-            if(result) {
-                openWebPage(url);
-            } else {
-                txtMessages.setText(errorMessage);
-            }
+        setLoadingPanelVisibility(View.GONE);
+    }
+
+    @UiThread
+    void showLinks(List<Link> links) {
+        lstLinks.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, links));
+    }
+
+    @Background
+    void retrieveUrl(String linkId) {
+        try {
+            String url = client.getLinkUrl(this, show.getStore(), show.getShowId(), season, episodeNumber, linkId);
+            openWebPage(url);
+        } catch(ShowServiceException e) {
+            Log.e("TvShowClient", e.getMessage(), e);
+            setMessage(e.getMessage());
         }
     }
-    
-    class ToggleEpisodeSeenTask extends AsyncTask<Boolean,Integer,Boolean> {
-        private String errorMessage;
-        
-        protected void onPreExecute() {
-            txtMessages.setText("");
+
+    @UiThread
+    void openWebPage(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.parse(url), "video/mkv");
+        Intent chooserIntent = Intent.createChooser(intent, getResources().getText(R.string.chooser_title));
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(chooserIntent);
         }
-        
-        protected Boolean doInBackground(Boolean... params) {
-            boolean seen = params[0];
-            try {
-                if (seen && !show.isEpisodeSeen(season, episodeNumber)) {
-                    setNextEpisode(show, season, episodeNumber);
-                    DatabaseManager.getInstance().saveShow(EpisodeActivity.this, show);
-                }
-                if (!seen && show.isSaved() && show.isEpisodeSeen(season, episodeNumber)) {
-                    show.setNextEpisode(season, episodeNumber, episodeTitle);
-                    DatabaseManager.getInstance().saveShow(EpisodeActivity.this, show);
-                }
+    }
+
+    @Background
+    void toggleEpisodeSeen(boolean seen) {
+        try {
+            if (seen && !show.isEpisodeSeen(season, episodeNumber)) {
+                setNextEpisode(show, season, episodeNumber);
+                database.saveShow(this, show);
+            } else if (!seen && show.isSaved() && show.isEpisodeSeen(season, episodeNumber)) {
+                show.setNextEpisode(season, episodeNumber, episodeTitle);
+                database.saveShow(this, show);
+            }
+            updateResult();
+        } catch(ShowServiceException | StoreException e) {
+            Log.e("TvShowClient", e.getMessage(), e);
+            setMessage(e.getMessage());
+        }
+    }
+
+    private boolean setNextEpisode(FavoriteShow show, int seasonNumber, int episodeNumber) throws ShowServiceException {
+        for (Episode episode : client.getSeasonEpisodes(this, show.getStore(), show.getShowId(), seasonNumber)) {
+            if (episode.getNumber() == episodeNumber + 1) {
+                show.setNextEpisode(seasonNumber, episode.getNumber(), episode.getTitle());
                 return true;
-            } catch(ShowServiceException | StoreException e) {
-                Log.e("TvShowClient", e.getMessage(), e);
-                errorMessage = e.getMessage();
-            }
-            return false;
-        }
-        
-        protected void onPostExecute(Boolean result) {
-            if (result) {
-                Intent intent = new Intent();
-                intent.putExtra("show", show);
-                setResult(RESULT_OK, intent);
-            } else {
-                txtMessages.setText(errorMessage);
             }
         }
-        
-        private boolean setNextEpisode(FavoriteShow show, int seasonNumber, int episodeNumber) throws ShowServiceException {
-            for(Episode episode : client.getSeasonEpisodes(EpisodeActivity.this, show.getStore(), show.getShowId(), seasonNumber)) {
-                if (episode.getNumber() == episodeNumber + 1) {
-                    show.setNextEpisode(seasonNumber, episode.getNumber(), episode.getTitle());
+        for (Season season : client.getShowSeasons(this, show.getStore(), show.getShowId())) {
+            if(season.getNumber() == seasonNumber + 1) {
+                List<Episode> episodes = client.getSeasonEpisodes(this, show.getStore(), show.getShowId(), season.getNumber());
+                if (!episodes.isEmpty()) {
+                    Episode episode = episodes.get(0);
+                    show.setNextEpisode(season.getNumber(), episode.getNumber(), episode.getTitle());
                     return true;
                 }
             }
-            for (Season season : client.getShowSeasons(EpisodeActivity.this, show.getStore(), show.getShowId())) {
-                if(season.getNumber() == seasonNumber + 1) {
-                    List<Episode> episodes = client.getSeasonEpisodes(EpisodeActivity.this, show.getStore(), show.getShowId(), season.getNumber());
-                    if (!episodes.isEmpty()) {
-                        Episode episode = episodes.get(0);
-                        show.setNextEpisode(season.getNumber(), episode.getNumber(), episode.getTitle());
-                        return true;
-                    }
-                }
-            }
-            show.setAllEpisodesSeen(true);
-            return false;
         }
+        show.setAllEpisodesSeen(true);
+        return false;
+    }
+
+    private void updateResult() {
+        Intent intent = new Intent();
+        intent.putExtra("show", show);
+        setResult(RESULT_OK, intent);
     }
 }

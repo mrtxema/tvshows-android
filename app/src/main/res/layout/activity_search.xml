@@ -15,7 +15,7 @@
         <ImageButton android:id="@id/btnSearchShow" android:layout_width="39.0dp" android:layout_height="wrap_content" android:layout_alignParentRight="true" android:src="@drawable/ic_search" android:text="@string/search" android:contentDescription="@string/search" />
     </RelativeLayout>
 
-    <TextView android:id="@id/txtMessages" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    <TextView android:id="@id/txtMessages" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="gone" />
 
     <ListView android:id="@id/lstShows" android:layout_width="fill_parent" android:layout_height="wrap_content" />
 

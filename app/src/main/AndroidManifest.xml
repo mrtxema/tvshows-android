@@ -3,18 +3,18 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application android:allowBackup="true" android:icon="@drawable/ic_launcher" android:label="@string/app_name" android:theme="@style/CustomTheme">
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.MainActivity">
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.MainActivity_">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SearchActivity"/>
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.ShowActivity"/>
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SeasonActivity"/>
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.EpisodeActivity"/>
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SettingsActivity"/>
-        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.CredentialsActivity"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SearchActivity_"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.ShowActivity_"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SeasonActivity_"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.EpisodeActivity_"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.SettingsActivity_"/>
+        <activity android:label="@string/app_name" android:name="com.acme.tvshows.android.CredentialsActivity_"/>
     </application>
 
 </manifest>

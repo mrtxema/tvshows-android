@@ -1,6 +1,6 @@
 package com.acme.tvshows.android;
 
-import android.os.AsyncTask;
+import java.util.Collections;
 import java.util.List;
 
 import com.acme.tvshows.android.model.Credentials;
@@ -16,70 +16,124 @@ import android.util.Log;
 import android.widget.ListView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.view.View;
 import android.widget.EditText;
-import android.os.Bundle;
 import android.content.Intent;
-import android.widget.ImageButton;
-import android.widget.AdapterView;
 
+import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.Click;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.ItemClick;
+import org.androidannotations.annotations.ItemSelect;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.annotations.ViewById;
+
+@EActivity(R.layout.activity_search)
 public class SearchActivity extends BaseActivity {
-    private static final String DEFAULT_STORE = "seriesyonkis";
     private static final int CREDENTIALS_REQUEST = 3;
-    private TvShowClient client;
-    private ListView lstShows;
-    private TextView txtMessages;
-    private EditText txtShow;
-    private Spinner selectProvider;
     private Store selectedStore;
+    @Bean TvShowClient client;
+    @Bean DatabaseManager database;
+    @ViewById ListView lstShows;
+    @ViewById EditText txtShow;
+    @ViewById Spinner selectProvider;
 
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState, R.layout.activity_search);
-        txtShow = (EditText) findViewById(R.id.txtShow);
-        selectProvider = (Spinner) findViewById(R.id.selectProvider);
-        txtMessages = (TextView) findViewById(R.id.txtMessages);
-        lstShows = (ListView) findViewById(R.id.lstShows);
-        client = TvShowClient.getInstance();
+    @AfterViews
+    void initViews() {
+        clearMessage();
+        retrieveStores();
+    }
 
-        txtShow.setSelection(txtShow.getText().length());
+    @Background
+    void retrieveStores() {
+        try {
+            showStores(client.getAllStores());
+        } catch(ShowServiceException e) {
+            Log.e("TvShowClient", e.getMessage(), e);
+            setMessage(e.getMessage());
+        }
+        setLoadingPanelVisibility(View.GONE);
+    }
 
-        selectProvider.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Store store = Store.class.cast(parent.getItemAtPosition(position));
-                if (!store.getLoginParameters().isEmpty()) {
-                    new RetrieveCredentialsTask(store).execute();
-                } else {
-                    selectedStore = store;
-                }
+    @UiThread
+    void showStores(List<Store> stores) {
+        ArrayAdapter<Store> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, stores);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        selectProvider.setAdapter(adapter);
+        if (stores.isEmpty()) {
+            setMessage(getResources().getString(R.string.noresults));
+        } else {
+            setSelectedStore(stores.get(0).getCode());
+        }
+    }
+
+    @ItemSelect
+    void selectProvider(boolean selected, Store store) {
+        if (selected) {
+            if (!store.getLoginParameters().isEmpty()) {
+                retrieveCredentials(store);
+            } else {
+                selectedStore = store;
             }
+        }
+    }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
+    @Background
+    void retrieveCredentials(Store store) {
+        try {
+            Credentials credentials = database.getCredentials(this, store.getCode());
+            showCredentials(store, credentials);
+        } catch (StoreException e) {
+            Log.e("TvShowClient", e.getMessage(), e);
+            setMessage(e.getMessage());
+        }
+    }
 
-        ImageButton btnSearchShow = (ImageButton) findViewById(R.id.btnSearchShow);
-        btnSearchShow.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if ((selectProvider.getCount() > 0) && (selectProvider.getSelectedItem() != null)) {
-                    new FindShowsTask().execute(txtShow.getText().toString(), selectedStore.getCode());
-                }
-            }
-        });
+    @UiThread
+    void showCredentials(Store store, Credentials credentials) {
+        if (!store.getLoginParameters().isEmpty() && (credentials == null || !credentials.containsParameters(store.getLoginParameters()))) {
+            CredentialsActivity_.intent(this).store(store).startForResult(CREDENTIALS_REQUEST);
+        } else {
+            selectedStore = store;
+        }
+    }
 
-        lstShows.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Show basicShow = Show.class.cast(adapterView.getItemAtPosition(i));
-                FavoriteShow show = new FavoriteShow(selectedStore.getCode(), basicShow.getId(), basicShow.getName());
-                Intent intent = new Intent(SearchActivity.this, ShowActivity.class);
-                intent.putExtra("show", show);
-                startActivity(intent);
-            }
-        });
+    @Click
+    void btnSearchShow() {
+        if ((selectProvider.getCount() > 0) && (selectProvider.getSelectedItem() != null)) {
+            setLoadingPanelVisibility(View.VISIBLE);
+            clearMessage();
+            lstShows.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, Collections.emptyList()));
+            findShows(txtShow.getText().toString(), selectedStore.getCode());
+        }
+    }
 
-        new RetrieveStoresTask().execute();
+    @Background
+    void findShows(String searchString, String store) {
+        try {
+            List<Show> shows = client.findShows(this, store, searchString);
+            showShows(shows);
+        } catch(ShowServiceException e) {
+            Log.e("TvShowClient", e.getMessage(), e);
+            setMessage(e.getMessage());
+        }
+        setLoadingPanelVisibility(View.GONE);
+    }
+
+    @UiThread
+    void showShows(List<Show> shows) {
+        lstShows.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, shows));
+        if (shows.isEmpty()) {
+            setMessage(getResources().getString(R.string.noresults));
+        }
+    }
+
+    @ItemClick
+    void lstShows(Show basicShow) {
+        FavoriteShow show = new FavoriteShow(selectedStore.getCode(), basicShow.getId(), basicShow.getName());
+        ShowActivity_.intent(this).show(show).start();
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -100,112 +154,5 @@ public class SearchActivity extends BaseActivity {
             }
         }
         selectProvider.setSelection(0);
-    }
-
-    private class RetrieveStoresTask extends AsyncTask<String,Integer,Boolean> {
-        private String errorMessage;
-        private List<Store> stores;
-
-        protected Boolean doInBackground(String... params) {
-            try {
-                stores = client.getAllStores();
-                if (stores.isEmpty()) {
-                    errorMessage = getResources().getString(R.string.noresults);
-                }
-                return !stores.isEmpty();
-            } catch(ShowServiceException e) {
-                Log.e("TvShowClient", e.getMessage(), e);
-                errorMessage = e.getMessage();
-            }
-            return false;
-        }
-
-        protected void onPostExecute(Boolean result) {
-            if (result) {
-                ArrayAdapter<Store> adapter = new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_item, stores);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                selectProvider.setAdapter(adapter);
-                setSelectedStore(DEFAULT_STORE);
-            } else {
-                txtMessages.setText(errorMessage);
-            }
-            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        }
-    }
-
-    private class FindShowsTask extends AsyncTask<String,Integer,Boolean> {
-        private String errorMessage;
-        private List<Show> shows;
-        
-        protected void onPreExecute() {
-            findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
-            txtMessages.setText("");
-        }
-        
-        protected Boolean doInBackground(String... params) {
-            try {
-                String searchString = params[0];
-                String store = params[1];
-                shows = client.findShows(SearchActivity.this, store, searchString);
-                if (shows.isEmpty()) {
-                    errorMessage = getResources().getString(R.string.noresults);
-                }
-                return !shows.isEmpty();
-            } catch(ShowServiceException e) {
-                Log.e("TvShowClient", e.getMessage(), e);
-                errorMessage = e.getMessage();
-            }
-            return false;
-        }
-        
-        protected void onPostExecute(Boolean result) {
-            if(result) {
-                lstShows.setAdapter(new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_list_item_1, shows));
-            } else {
-                txtMessages.setText(errorMessage);
-            }
-            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        }
-    }
-
-    private class RetrieveCredentialsTask extends AsyncTask<String,Integer,Boolean> {
-        private final Store store;
-        private Credentials credentials;
-        private String errorMessage;
-
-        private RetrieveCredentialsTask(Store store) {
-            this.store = store;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            txtMessages.setText("");
-        }
-
-        @Override
-        protected Boolean doInBackground(String... params) {
-            try {
-                credentials = DatabaseManager.getInstance().getCredentials(SearchActivity.this, store.getCode());
-                return true;
-            } catch (StoreException e) {
-                Log.e("TvShowClient", e.getMessage(), e);
-                errorMessage = e.getMessage();
-            }
-            return false;
-        }
-
-        protected void onPostExecute(Boolean result) {
-            if (result) {
-                if (!store.getLoginParameters().isEmpty() && (credentials == null || !credentials.containsParameters(store.getLoginParameters()))) {
-                    Intent intent = new Intent(SearchActivity.this, CredentialsActivity.class);
-                    intent.putExtra("store", store);
-                    startActivityForResult(intent, CREDENTIALS_REQUEST);
-                } else {
-                    selectedStore = store;
-                }
-            } else {
-                txtMessages.setText(errorMessage);
-            }
-        }
     }
 }

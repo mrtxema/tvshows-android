@@ -11,18 +11,13 @@ import com.acme.tvshows.android.CredentialsActivity;
 import com.acme.tvshows.android.model.Credentials;
 import com.acme.tvshows.android.model.FavoriteShow;
 
+import org.androidannotations.annotations.EBean;
+
+@EBean(scope = EBean.Scope.Singleton)
 public class DatabaseManager {
     private List<FavoriteShow> showsCache;
     private Map<String, Credentials> credentialsCache;
-    private static final DatabaseManager instance = new DatabaseManager();
-    
-    private DatabaseManager() {
-    }
-    
-    public static DatabaseManager getInstance() {
-        return instance;
-    }
-    
+
     private TvShowsDatabase getTvShowsDatabase(Context context) {
         return new TvShowsDatabase(context);
     }

@@ -1,14 +1,11 @@
 package com.acme.tvshows.android;
 
-import android.os.AsyncTask;
-import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.acme.tvshows.android.model.Credentials;
@@ -16,50 +13,39 @@ import com.acme.tvshows.android.service.Store;
 import com.acme.tvshows.android.store.DatabaseManager;
 import com.acme.tvshows.android.store.StoreException;
 
+import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.Click;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.Extra;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.annotations.ViewById;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@EActivity(R.layout.activity_credentials)
 public class CredentialsActivity extends BaseActivity {
-    private Store store;
-    private Credentials credentials;
+    @Bean DatabaseManager database;
+    @Extra Store store;
+    @Extra Credentials credentials;
+    @ViewById TextView credentialsTitle;
+    @ViewById ViewGroup lstParameters;
     private Map<String, EditText> formFields;
-    private TextView txtMessages;
 
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState, R.layout.activity_credentials);
-        store = getIntent().getExtras().getParcelable("store");
-        credentials = getIntent().getExtras().getParcelable("credentials");
-
-        txtMessages = (TextView) findViewById(R.id.txtMessages);
-        TextView credentialsTitle = (TextView) findViewById(R.id.credentialsTitle);
+    @AfterViews
+    void initViews() {
         credentialsTitle.setText(getString(R.string.credentialsTitle, capitalize(store.getCode())));
-
-        Button btnCancel = (Button) findViewById(R.id.btnCancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                setResult(RESULT_CANCELED);
-                CredentialsActivity.this.finish();
-            }
-        });
-
-        Button btnOk = (Button) findViewById(R.id.btnOk);
-        btnOk.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                new SaveCredentialsTask().execute() ;
-            }
-        });
-
         formFields = new HashMap<>();
-        LinearLayout lstParameters = (LinearLayout) findViewById(R.id.lstParameters);
         for (String parameter : store.getLoginParameters()) {
             String parameterValue = credentials == null ? null : credentials.getParameters().get(parameter);
             lstParameters.addView(inflateView(parameter, parameterValue));
         }
-
-        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        setLoadingPanelVisibility(View.GONE);
     }
 
-    public View inflateView(String item, String value) {
+    private View inflateView(String item, String value) {
         LayoutInflater inflater = LayoutInflater.from(this);
         View rowView = inflater.inflate(R.layout.listitem_form, null, false);
         TextView fieldLabel = (TextView) rowView.findViewById(R.id.fieldLabel);
@@ -79,46 +65,43 @@ public class CredentialsActivity extends BaseActivity {
         return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 
-    private class SaveCredentialsTask extends AsyncTask<String,Integer,Boolean> {
-        private String errorMessage;
+    @Click
+    void btnCancel() {
+        finishActivityWithResult(RESULT_CANCELED);
+    }
 
-        private Map<String, String> getFormParameters() {
-            Map<String, String> result = new HashMap<>();
-            for (Map.Entry<String, EditText> entry : formFields.entrySet()) {
-                result.put(entry.getKey(), entry.getValue().getText().toString());
+    @Click
+    void btnOk() {
+        clearMessage();
+        saveCredentials();
+    }
+
+    private Map<String, String> getFormParameters() {
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, EditText> entry : formFields.entrySet()) {
+            result.put(entry.getKey(), entry.getValue().getText().toString());
+        }
+        return result;
+    }
+
+    @Background
+    void saveCredentials() {
+        Credentials newCredentials = new Credentials(store.getCode(), getFormParameters());
+        try {
+            if (credentials != null) {
+                database.deleteCredentials(this, credentials);
             }
-            return result;
+            database.saveCredentials(this, newCredentials);
+            finishActivityWithResult(RESULT_OK);
+        } catch (StoreException e) {
+            Log.e("TvShowClient", e.getMessage(), e);
+            setMessage(e.getMessage());
         }
+    }
 
-        @Override
-        protected void onPreExecute() {
-            txtMessages.setText("");
-        }
-
-        @Override
-        protected Boolean doInBackground(String... params) {
-            Credentials newCredentials = new Credentials(store.getCode(), getFormParameters());
-            try {
-                if (credentials != null) {
-                    DatabaseManager.getInstance().deleteCredentials(CredentialsActivity.this, credentials);
-                }
-                DatabaseManager.getInstance().saveCredentials(CredentialsActivity.this, newCredentials);
-                return true;
-            } catch (StoreException e) {
-                Log.e("TvShowClient", e.getMessage(), e);
-                errorMessage = e.getMessage();
-            }
-            return false;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-            if (result) {
-                setResult(RESULT_OK);
-                CredentialsActivity.this.finish();
-            } else {
-                txtMessages.setText(errorMessage);
-            }
-        }
+    @UiThread
+    protected void finishActivityWithResult(int result) {
+        setResult(result);
+        finish();
     }
 }

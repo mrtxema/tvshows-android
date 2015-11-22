@@ -1,5 +1,6 @@
 package com.acme.tvshows.android.service;
 
+import org.androidannotations.annotations.EBean;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -15,12 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@EBean
 public class RestApiClient {
-    private final HttpClient httpClient;
-
-    public RestApiClient() {
-        httpClient = new DefaultHttpClient();
-    }
+    private final HttpClient httpClient = new DefaultHttpClient();
 
     private RestApiResponse callUrl(String url) throws IOException {
         final HttpGet httpGet = new HttpGet(url);

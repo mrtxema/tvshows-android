@@ -23,7 +23,7 @@
 
     </LinearLayout>
 
-    <TextView android:id="@id/txtMessages" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" />
+    <TextView android:id="@id/txtMessages" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="gone" />
 
     <ListView android:id="@id/lstSeasons" android:layout_width="fill_parent" android:layout_height="wrap_content" />
 
