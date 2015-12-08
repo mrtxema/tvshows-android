@@ -19,6 +19,7 @@ import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.ItemClick;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
+import org.androidannotations.annotations.res.StringRes;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,9 @@ public class SettingsActivity extends BaseActivity {
     private Map<String, Store> stores;
     @Bean TvShowClient client;
     @Bean DatabaseManager database;
+    @StringRes(R.string.noresults)
+    String noResults;
+
     @ViewById ListView lstCredentials;
 
     @Override
@@ -69,7 +73,7 @@ public class SettingsActivity extends BaseActivity {
     void showCredentials(List<Credentials> credentialsList) {
         lstCredentials.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, credentialsList));
         if (credentialsList.isEmpty()) {
-            setMessage(getResources().getString(R.string.noresults));
+            setMessage(noResults);
         }
     }
 
@@ -91,18 +95,17 @@ public class SettingsActivity extends BaseActivity {
             stores.put(store.getCode(), store);
         }
         if (storeList.isEmpty()) {
-            setMessage(getResources().getString(R.string.noresults));
+            setMessage(noResults);
         }
     }
 
     /*
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == CREDENTIALS_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                setLoadingPanelVisibility(View.VISIBLE);
-                clearMessage();
-                retrieveCredentials();
-            }
+    @OnActivityResult(CREDENTIALS_REQUEST)
+    void onCredentialsResult(int resultCode) {
+        if (resultCode == RESULT_OK) {
+            setLoadingPanelVisibility(View.VISIBLE);
+            clearMessage();
+            retrieveCredentials();
         }
     }
     */

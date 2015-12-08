@@ -5,6 +5,8 @@ import com.acme.tvshows.android.service.Season;
 import com.acme.tvshows.android.service.ShowServiceException;
 import com.acme.tvshows.android.service.TvShowClient;
 import com.acme.tvshows.android.model.FavoriteShow;
+
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import com.acme.tvshows.android.adapter.ItemViewAdapter;
 import com.acme.tvshows.android.adapter.ItemViewCustomizer;
@@ -25,8 +27,10 @@ import org.androidannotations.annotations.CheckedChange;
 import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.Extra;
 import org.androidannotations.annotations.ItemClick;
+import org.androidannotations.annotations.OnActivityResult;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
+import org.androidannotations.annotations.res.DrawableRes;
 
 @EActivity(R.layout.activity_show)
 public class ShowActivity extends BaseActivity {
@@ -39,6 +43,8 @@ public class ShowActivity extends BaseActivity {
     @ViewById CheckBox btnAddShow;
     @ViewById ListView lstSeasons;
     @ViewById TextView title;
+    @DrawableRes(android.R.drawable.checkbox_on_background)
+    Drawable checkboxDrawable;
 
     @Override
     protected void onResume() {
@@ -84,8 +90,8 @@ public class ShowActivity extends BaseActivity {
     void showSeasons(List<Season> seasons) {
         adapter = new ItemViewAdapter<>(this, seasons, new ItemViewCustomizer<Season>() {
             @Override
-            public Integer getImageId(Season season) {
-                return show.isSeasonSeen(season.getNumber()) ? android.R.drawable.checkbox_on_background : null;
+            public Drawable getImage(Season season) {
+                return show.isSeasonSeen(season.getNumber()) ? checkboxDrawable : null;
             }
         });
         lstSeasons.setAdapter(adapter);
@@ -105,14 +111,12 @@ public class ShowActivity extends BaseActivity {
         }
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SEASON_REQUEST && data != null) {
-            FavoriteShow resultShow = data.getExtras().getParcelable("show");
-            if (resultShow != null) {
-                show = resultShow;
-                btnAddShow.setChecked(show.isSaved());
-                datasetChanged = true;
-            }
+    @OnActivityResult(SEASON_REQUEST)
+    void onSeasonResult(Intent data) {
+        if (data != null && data.hasExtra("show")) {
+            show = data.getExtras().getParcelable("show");
+            btnAddShow.setChecked(show.isSaved());
+            datasetChanged = true;
         }
     }
 }

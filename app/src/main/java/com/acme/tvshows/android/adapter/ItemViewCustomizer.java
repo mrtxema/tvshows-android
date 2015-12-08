@@ -1,6 +1,8 @@
 package com.acme.tvshows.android.adapter;
 
+import android.graphics.drawable.Drawable;
+
 public interface ItemViewCustomizer<T> {
     
-    Integer getImageId(T object);
+    Drawable getImage(T object);
 }

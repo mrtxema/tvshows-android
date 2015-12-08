@@ -5,6 +5,8 @@ import com.acme.tvshows.android.service.Episode;
 import com.acme.tvshows.android.service.ShowServiceException;
 import com.acme.tvshows.android.service.TvShowClient;
 import com.acme.tvshows.android.model.FavoriteShow;
+
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import com.acme.tvshows.android.adapter.ItemViewAdapter;
 import com.acme.tvshows.android.adapter.ItemViewCustomizer;
@@ -20,8 +22,10 @@ import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.Extra;
 import org.androidannotations.annotations.ItemClick;
+import org.androidannotations.annotations.OnActivityResult;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
+import org.androidannotations.annotations.res.DrawableRes;
 
 @EActivity(R.layout.activity_season)
 public class SeasonActivity extends BaseActivity {
@@ -33,6 +37,8 @@ public class SeasonActivity extends BaseActivity {
     @Extra FavoriteShow show;
     @ViewById ListView lstEpisodes;
     @ViewById TextView title;
+    @DrawableRes(android.R.drawable.checkbox_on_background)
+    Drawable checkboxDrawable;
 
     @Override
     protected void onResume() {
@@ -71,23 +77,21 @@ public class SeasonActivity extends BaseActivity {
     void showEpisodes(List<Episode> episodes) {
         adapter = new ItemViewAdapter<>(this, episodes, new ItemViewCustomizer<Episode>() {
             @Override
-            public Integer getImageId(Episode item) {
-                return show.isEpisodeSeen(season, item.getNumber()) ? android.R.drawable.checkbox_on_background : null;
+            public Drawable getImage(Episode item) {
+                return show.isEpisodeSeen(season, item.getNumber()) ? checkboxDrawable : null;
             }
         });
         lstEpisodes.setAdapter(adapter);
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == EPISODE_REQUEST && data != null) {
-            FavoriteShow resultShow = data.getExtras().getParcelable("show");
-            if (resultShow != null) {
-                show = resultShow;
-                datasetChanged = true;
-                Intent intent = new Intent();
-                intent.putExtra("show", show);
-                setResult(RESULT_OK, intent);
-            }
+    @OnActivityResult(EPISODE_REQUEST)
+    void onEpisodeResult(Intent data) {
+        if (data != null && data.hasExtra("show")) {
+            show = data.getExtras().getParcelable("show");
+            datasetChanged = true;
+            Intent intent = new Intent();
+            intent.putExtra("show", show);
+            setResult(RESULT_OK, intent);
         }
     }
 }

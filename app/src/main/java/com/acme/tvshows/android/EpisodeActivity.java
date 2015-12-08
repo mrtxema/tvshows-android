@@ -6,6 +6,7 @@ import com.acme.tvshows.android.service.Link;
 import com.acme.tvshows.android.service.ShowServiceException;
 import com.acme.tvshows.android.service.TvShowClient;
 import com.acme.tvshows.android.model.FavoriteShow;
+
 import android.util.Log;
 import android.widget.ListView;
 import android.widget.ArrayAdapter;
@@ -31,11 +32,16 @@ import org.androidannotations.annotations.Extra;
 import org.androidannotations.annotations.ItemClick;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
+import org.androidannotations.annotations.res.LayoutRes;
+import org.androidannotations.annotations.res.StringRes;
 
 @EActivity(R.layout.activity_episode)
 public class EpisodeActivity extends BaseActivity {
     @Bean DatabaseManager database;
     @Bean TvShowClient client;
+    @StringRes(R.string.chooser_title)
+    String chooserTitle;
+
     @Extra int episodeNumber;
     @Extra String episodeTitle;
     @Extra int season;
@@ -108,7 +114,7 @@ public class EpisodeActivity extends BaseActivity {
     void openWebPage(String url) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.parse(url), "video/mkv");
-        Intent chooserIntent = Intent.createChooser(intent, getResources().getText(R.string.chooser_title));
+        Intent chooserIntent = Intent.createChooser(intent, chooserTitle);
         if (intent.resolveActivity(getPackageManager()) != null) {
             startActivity(chooserIntent);
         }

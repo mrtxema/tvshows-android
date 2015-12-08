@@ -18,7 +18,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.view.View;
 import android.widget.EditText;
-import android.content.Intent;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Background;
@@ -27,8 +26,10 @@ import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.ItemClick;
 import org.androidannotations.annotations.ItemSelect;
+import org.androidannotations.annotations.OnActivityResult;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
+import org.androidannotations.annotations.res.StringRes;
 
 @EActivity(R.layout.activity_search)
 public class SearchActivity extends BaseActivity {
@@ -36,6 +37,9 @@ public class SearchActivity extends BaseActivity {
     private Store selectedStore;
     @Bean TvShowClient client;
     @Bean DatabaseManager database;
+    @StringRes(R.string.noresults)
+    String noResults;
+
     @ViewById ListView lstShows;
     @ViewById EditText txtShow;
     @ViewById Spinner selectProvider;
@@ -63,7 +67,7 @@ public class SearchActivity extends BaseActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         selectProvider.setAdapter(adapter);
         if (stores.isEmpty()) {
-            setMessage(getResources().getString(R.string.noresults));
+            setMessage(noResults);
         } else {
             setSelectedStore(stores.get(0).getCode());
         }
@@ -126,7 +130,7 @@ public class SearchActivity extends BaseActivity {
     void showShows(List<Show> shows) {
         lstShows.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, shows));
         if (shows.isEmpty()) {
-            setMessage(getResources().getString(R.string.noresults));
+            setMessage(noResults);
         }
     }
 
@@ -136,13 +140,12 @@ public class SearchActivity extends BaseActivity {
         ShowActivity_.intent(this).show(show).start();
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == CREDENTIALS_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                selectedStore = Store.class.cast(selectProvider.getSelectedItem());
-            } else {
-                setSelectedStore(selectedStore.getCode());
-            }
+    @OnActivityResult(CREDENTIALS_REQUEST)
+    void onCredentialsResult(int resultCode) {
+        if (resultCode == RESULT_OK) {
+            selectedStore = Store.class.cast(selectProvider.getSelectedItem());
+        } else {
+            setSelectedStore(selectedStore.getCode());
         }
     }
 

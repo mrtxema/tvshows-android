@@ -1,5 +1,6 @@
 package com.acme.tvshows.android.adapter;
 
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.widget.ArrayAdapter;
 import android.content.Context;
@@ -26,9 +27,9 @@ public class ItemViewAdapter<T> extends ArrayAdapter<T> {
         T item = getItem(position);
         txtTitle.setText(item.toString());
         ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
-        Integer imageId = customizer.getImageId(item);
-        if (imageId != null) {
-            imageView.setImageResource(imageId);
+        Drawable image = customizer.getImage(item);
+        if (image != null) {
+            imageView.setImageDrawable(image);
         }
         return rowView;
     }

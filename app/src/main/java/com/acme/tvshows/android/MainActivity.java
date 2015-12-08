@@ -17,10 +17,14 @@ import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.ItemClick;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
+import org.androidannotations.annotations.res.StringRes;
 
 @EActivity(R.layout.activity_main)
 public class MainActivity extends BaseActivity {
     @Bean DatabaseManager database;
+    @StringRes(R.string.noresults)
+    String noResults;
+
     @ViewById ListView lstShows;
 
     @ItemClick
@@ -56,7 +60,7 @@ public class MainActivity extends BaseActivity {
     void showShows(List<FavoriteShow> shows) {
         lstShows.setAdapter(new ShowViewAdapter(this, shows));
         if (shows.isEmpty()) {
-            setMessage(getResources().getString(R.string.noresults));
+            setMessage(noResults);
         }
     }
 }
